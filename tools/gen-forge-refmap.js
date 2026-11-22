@@ -20,16 +20,16 @@ const OUT = path.join(ROOT, 'forge/src/main/resources/lte.forge.refmap.json');
 
 // mixin 类（内部名） → { 源码选择器: SRG 选择器 }
 const TABLE = {
-  'dev/js/mtrheadlight/mixin/beamlight/BeamLightMixin': {
+  'dev/js/lte/mixin/beamlight/BeamLightMixin': {
     // LevelRenderer#getLightColor(BlockAndTintGetter, BlockState, BlockPos)I
     'getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I':
       'Lnet/minecraft/client/renderer/LevelRenderer;m_109537_(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I',
   },
-  'dev/js/mtrheadlight/mixin/collision/MixinEntityMove': {
+  'dev/js/lte/mixin/collision/MixinEntityMove': {
     // Entity#move(MoverType, Vec3)V（三个注入点共用同一条）
     'move': 'Lnet/minecraft/world/entity/Entity;m_6478_(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V',
   },
-  'dev/js/mtrheadlight/mixin/rain/WorldRendererRainMixin': {
+  'dev/js/lte/mixin/rain/WorldRendererRainMixin': {
     // LevelRenderer#renderSnowAndRain(LightTexture, float, double, double, double)V
     'renderSnowAndRain(Lnet/minecraft/client/renderer/LightTexture;FDDD)V':
       'Lnet/minecraft/client/renderer/LevelRenderer;m_109703_(Lnet/minecraft/client/renderer/LightTexture;FDDD)V',
@@ -37,12 +37,12 @@ const TABLE = {
     'tickRain(Lnet/minecraft/client/Camera;)V':
       'Lnet/minecraft/client/renderer/LevelRenderer;m_109693_(Lnet/minecraft/client/Camera;)V',
   },
-  'dev/js/mtrheadlight/mixin/scatter/GameRendererScatterMixin': {
+  'dev/js/lte/mixin/scatter/GameRendererScatterMixin': {
     // GameRenderer#renderLevel(float, long, PoseStack)V
     'renderLevel(FJLcom/mojang/blaze3d/vertex/PoseStack;)V':
       'Lnet/minecraft/client/renderer/GameRenderer;m_109089_(FJLcom/mojang/blaze3d/vertex/PoseStack;)V',
   },
-  'dev/js/mtrheadlight/mixin/registry/SimpleRegistryFreezeMixin': {
+  'dev/js/lte/mixin/registry/SimpleRegistryFreezeMixin': {
     // MappedRegistry#freeze()Lnet/minecraft/core/Registry;
     'freeze': 'Lnet/minecraft/core/MappedRegistry;m_203521_()Lnet/minecraft/core/Registry;',
   },

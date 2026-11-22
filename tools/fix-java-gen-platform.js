@@ -3,7 +3,7 @@
  * Fabric → Forge 平台层批量改写（可重跑、幂等）—— LTE 版。
  *
  * 只做「调用平台 API 的那几行」的机械替换，业务逻辑一行不动：
- *   1. 导入 / 全限定名：net.fabricmc.* → dev.js.mtrheadlight.forge.platform.*（shim 与 Fabric
+ *   1. 导入 / 全限定名：net.fabricmc.* → dev.js.lte.forge.platform.*（shim 与 Fabric
  *      同名同形状，所以 lambda / 强转 / 方法名都不用改）。
  *   2. 注册：Registry.register(BuiltInRegistries.X, id, value) → Reg.item/tab/particle(id, value)。
  *   3. 创造页签：FabricItemGroup.builder() → CreativeModeTab.builder()；
@@ -25,7 +25,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const GEN = path.join(ROOT, 'forge/src/main/java-gen');
 const DRY = process.argv.includes('--dry-run');
-const PLATFORM = 'dev.js.mtrheadlight.forge.platform.';
+const PLATFORM = 'dev.js.lte.forge.platform.';
 
 const changed = [];
 
@@ -102,7 +102,7 @@ function rewrite(src) {
   out = out.split('CompletableFuture.completedFuture((Object)null)').join('CompletableFuture.completedFuture((Void)null)');
 
   if (out.includes('Reg.item(') || out.includes('Reg.tab(') || out.includes('Reg.particle(')) {
-    out = ensureImport(out, 'dev.js.mtrheadlight.forge.platform.Reg');
+    out = ensureImport(out, 'dev.js.lte.forge.platform.Reg');
   }
   if (out.includes('CommandSourceStack')) {
     out = ensureImport(out, 'net.minecraft.commands.CommandSourceStack');
@@ -115,7 +115,7 @@ walk(GEN, files);
 
 // Fabric 专属、Forge 无等价物的类：整文件删除（ModMenu 在 Forge 侧不存在；Forge 的配置入口
 // 是按键 + 模组列表的 ConfigScreenHandler 扩展点，本模组的 UI 不依赖 ModMenu）。
-const DEAD = ['dev/js/mtrheadlight/ModMenuIntegration.java'];
+const DEAD = ['dev/js/lte/ModMenuIntegration.java'];
 for (const rel of DEAD) {
   const file = path.join(GEN, rel);
   if (fs.existsSync(file)) {

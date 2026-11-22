@@ -11,7 +11,7 @@ plugins {
     id 'io.github.pacifistmc.forgix' version '1.2.9'
 }
 
-group = 'dev.js.mtrheadlight'
+group = 'dev.js.lte'
 
 // 版本号从两侧的 gradle.properties 读，避免三处各写一遍（两侧不一致就直接失败）。
 def readProp = { String path, String key ->
@@ -30,7 +30,7 @@ def fabricJarName = readProp('../v1.20.1/gradle.properties', 'archives_base_name
 
 forgix {
     // 合并后 jar 的 group 与文件名（不带 -forge / -fabric 后缀）
-    group = 'dev.js.mtrheadlight'
+    group = 'dev.js.lte'
     mergedJarName = "${fabricJarName}-${fabricVersion}.jar"
     outputDir = 'build/libs'
 

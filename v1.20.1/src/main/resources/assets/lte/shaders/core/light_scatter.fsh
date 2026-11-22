@@ -69,7 +69,7 @@ float smooth01(float x) {
 void main() {
     // 取证：/mtr_lte lighttest 打开时，这一整个 pass 只输出一块纯红 —— 不读深度、不看灯数、
     // 不做任何数学。于是「屏幕上有没有红」只取决于「程序绑定 + uniform 上传 + 这块全屏四边形 +
-    // 颜色附件」这条链，与模型和参数完全无关。见 dev.js.mtrheadlight.LightTest。
+    // 颜色附件」这条链，与模型和参数完全无关。见 dev.js.lte.LightTest。
     if (uTest == 1) {
         fragColor = vec4(1.0, 0.0, 0.0, 1.0);
         return;

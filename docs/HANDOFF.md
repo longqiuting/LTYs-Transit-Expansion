@@ -1,6 +1,7 @@
 # HANDOFF —— 明天从这里继续
 
-> 最后更新 2026-11-23 上午（M4b-10 收尾）。两个仓库都在本地已提交、**未 push**。
+> 最后更新 2026-11-23（M4b-12：LTE 包根改名 `dev.js.lte`，两个模组已能在 Forge 共存）。两个仓库都在本地已提交、**未 push**。
+
 
 ## 一句话状态
 
@@ -10,7 +11,8 @@
 | LTED Forge | ✅ **服务端 + 客户端双通**（`Done (2.004s)`、172 方块、7 个 mixin apply、客户端到主菜单） |
 | LTE（优化+连接器，`lte`）Fabric | ✅ `LTYs-Transit-Expansion-3.0.0.jar`，已装实例 |
 | LTE Forge | ✅ **服务端 + 客户端双通**（`Done (5.263s)` / 客户端到主菜单，见下「M4b-10 验收」） |
-| Forge 单 jar（Forgix） | ✅ `merge/build/libs/LTYs-Transit-Expansion-3.0.0.jar`（1,576,324 B / 587 条目），Forge 服务端实机通过 |
+| Forge 单 jar（Forgix） | ✅ `merge/build/libs/LTYs-Transit-Expansion-3.0.0.jar`（1,562,133 B / 587 条目），Forge 服务端实机通过 |
+| LTE + LTED 共存（M4b-12 包根改名后） | ✅ Forge 四 jar `Done (2.431s)` / Fabric 四 jar `Done (2.455s)`，见下「M4b-12」 |
 | M5 仓库拆分（改名/新建仓/tag/release/README） | ❌ 未开始 |
 
 ## LTE Forge / 单 jar 现状（M4b-10 已完成）
@@ -73,6 +75,43 @@ unzip -Z1 merge/build/libs/LTYs-Transit-Expansion-3.0.0.jar | wc -l    # 587
 ```
 
 mixin 的 `Mixing ... into ...` 只在 `debug.log`（DEBUG 级），`latest.log` 里看不到。
+
+## M4b-12：包根改名（两个模组在 Forge 共存）
+
+问题：LTE（`lte`）与 LTED（`mtrlte`）共用包根 `dev.js.mtrheadlight`，Forge 用 JPMS，
+两个 mod 模块导出同一包（Forgix 前缀后是 `fabric.dev.js.mtrheadlight.*`）直接
+`ResolutionException: Modules lte and mtrlte export package ... to module minecraft`，
+`forge/` 树里还有 17 个同名 class。LTED 保持不动，**LTE 的包根改成 `dev.js.lte`**。
+
+改动（脚本一次跑完，`git mv` 4 个目录 + 633 处文本替换，共 333 个文件）：
+
+- `common/`、`v1.20.1/src/main/java/`、`forge/src/main/java/`、`forge/src/main/java-gen/` 的
+  `dev/js/mtrheadlight/**` → `dev/js/lte/**`，`package` / `import` 同步；
+- 8+4 份 `*.mixins.json` 的 `package` / `plugin`、`fabric.mod.json` entrypoints（Forgix 之后再前缀成
+  `fabric.dev.js.lte.*`）、`forge-lte.forge.refmap.json` 的 key、`tools/fix-java-gen-platform.js`、
+  `tools/verify-decompiled.sh`、两侧 `maven_group`、`merge/build.gradle` 的 `group`。
+- 构建产物仍是 `LTYs-Transit-Expansion-3.0.0.jar`（1,562,133 B / 587 条目）。
+- 混入函数名前缀 `mtrheadlight$…` 与系统属性 `mtrheadlight.*` 是运行期名字，**没动**（与包名无关）。
+
+| 验收项 | 结果 | 证据 |
+|---|---|---|
+| Fabric `clean build` | ✅ `BUILD SUCCESSFUL`，234 class | `temp/clean-fabric.log` |
+| Forge `./forge/gradlew -p forge clean build --offline` | ✅ `BUILD SUCCESSFUL`，309 class | `temp/clean-forge.log` |
+| Forge 四 jar 共存（MTR+architectury+LTE+LTED） | ✅ `Done (2.431s)`、`{lte}` 与 `{mtrlte}` 都在、`ERROR` 0 行、`ResolutionException`/`exports package` 0 | `forge-test/console-m4b12-coexist.txt` |
+| 两个模组的 mixin 都生效 | ✅ `Mixing BlockPlatformDoorTypeMixin from forge-mtrlte.forge.mixins.json` + `Mixing RailwayDataCaptureMixin / TrainSimulateCaptureMixin from forge-lte.forge.mtrserver.mixins.json` | `forge-test/logs/debug.log` |
+| Fabric 四 jar 共存 | ✅ `Done (2.455s)`，`- lte 3.0.0` / `- mtrlte 3.0.0`；11 行 `No data fixer registered for …` 是 MTR 既有噪声（改名前同数） | `fabric-test-lted/console-m4b12-coexist.txt` |
+| 跨 jar class 交集 | ✅ `comm -12` = 0（LTE 543 / LTED 687 个 class） | — |
+| 旧包根残留 | ✅ `git ls-files \| grep -v docs/` 0 命中；工作树（除 `docs/`、`.remap-work/`）0 命中 | — |
+
+复现：
+
+```bash
+cd /d/MC-MTR-JS/lte && bash tools/merge-single-jar.sh          # 三步：Fabric→Forge→Forgix
+cd /d/MC-MTR-JS/forge-test && (sleep 85; echo stop) | bash run-test-server.sh > console-m4b12-coexist.txt 2>&1
+cd /d/MC-MTR-JS/fabric-test-lted && (sleep 70; echo stop) | "C:/Program Files/Java/jdk-17/bin/java.exe" -Xmx2G -jar fabric-server-launch.jar nogui > console-m4b12-coexist.txt 2>&1
+```
+
+两边 `mods/` 现在都是共存状态（MTR + architectury + LTE + LTED）。
 
 ## 已知遗留（不影响明天主线）
 

@@ -51,9 +51,9 @@ elif [ $# -gt 0 ]; then
   CLASSES=("$@")
 else
   # 必测的三个 + 从 java-gen 随机抽 5 个（固定种子，保证可复现）
-  CLASSES=(dev.js.mtrheadlight.clock.ClockBlock
-           dev.js.mtrheadlight.xiamen.pids.PidsXiamenRenderer
-           dev.js.mtrheadlight.xiamen.XiamenStripPainter)
+  CLASSES=(dev.js.lte.clock.ClockBlock
+           dev.js.lte.xiamen.pids.PidsXiamenRenderer
+           dev.js.lte.xiamen.XiamenStripPainter)
   while IFS= read -r line; do CLASSES+=("$line"); done < <(
     ( cd "$GEN" && find . -name '*.java' | sed 's|^\./||; s|\.java$||; s|/|.|g' ) \
       | grep -v '\$' | sort | awk 'NR%37==0' | head -5

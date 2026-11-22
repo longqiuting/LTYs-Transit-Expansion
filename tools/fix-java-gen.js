@@ -37,59 +37,59 @@ function write(rel, text, why) {
 // decompiler 把 `new X;` 与后面的 `<init>(...)` 拆开，中间夹着 label 块。
 // 语义等价改法：删掉裸 `new X;`，把 `<init>(` 改成 `new X(`（同一变量被重新赋值）。
 const LABEL_CTOR = [
-  { rel: 'dev/js/mtrheadlight/HeadlightConfig.java', cls: 'HeadlightConfig.Effective' },
+  { rel: 'dev/js/lte/HeadlightConfig.java', cls: 'HeadlightConfig.Effective' },
 ];
 
 const TABLE = [
   // --- 反编译丢泛型 / 类型推断（补显式 cast 或类型参数，语义不变） ---
-  { rel: 'dev/js/mtrheadlight/CustomPack.java', from: '.orElse((Object)null)', to: '.orElse((String)null)', why: 'Optional<String>.orElse 参数被擦成 Object' },
-  { rel: 'dev/js/mtrheadlight/BeamPackWriter.java', from: '.orElse((Object)null)', to: '.orElse((Path)null)', why: 'Optional<Path>.orElse 参数被擦成 Object' },
-  { rel: 'dev/js/mtrheadlight/BeamPackWriter.java', from: 'new ArrayList(((VehicleLightOverrides.Vehicle)result.vehicles.get(0)).beams)', to: 'new ArrayList<VehicleLightOverrides.Beam>(((VehicleLightOverrides.Vehicle)result.vehicles.get(0)).beams)', why: '裸 ArrayList 使三元式退化成 List<Object>' },
-  { rel: 'dev/js/mtrheadlight/bind/MtrTiles.java', re: /new LinkedHashSet\(\(Set\)value\)/g, to: 'new LinkedHashSet<Long>((Set)value)', why: 'Set<Object> → Set<Long>：补类型参数（两处）' },
-  { rel: 'dev/js/mtrheadlight/VehicleLightOverrides.java', from: 'TreeMap var9 = new TreeMap();', to: 'TreeMap<String, List<VehicleLightOverrides.Beam>> var9 = new TreeMap<>();', why: '裸 TreeMap 让 keySet()/entrySet() 退化成 Object' },
-  { rel: 'dev/js/mtrheadlight/VehicleLightOverrides.java', from: 'auto = new LinkedHashMap();', to: 'auto = new LinkedHashMap<String, List<VehicleLightOverrides.Beam>>();', why: '同上：auto 需要 String→List<Beam> 的类型' },
-  { rel: 'dev/js/mtrheadlight/collision/RailBed.java', re: /\(\(Map\)(railsMap|endsRaw|innerRaw)\)/g, to: '((Map<?, ?>)$1)', why: '裸 Map 的 entrySet 元素是 Object，换成 Map<?,?> 后才是 Entry<?,?>' },
-  { rel: 'dev/js/mtrheadlight/DebugProbe.java', from: 'new ArrayList(ClientData.TRAINS)', to: 'new ArrayList<TrainClient>(ClientData.TRAINS)', why: '裸 ArrayList 让 for 变量退化成 Object' },
-  { rel: 'dev/js/mtrheadlight/ShaderPackProbe.java', from: 'optifineActiveProgram.get((Object)null) != 0', to: '((Number)optifineActiveProgram.get((Object)null)).intValue() != 0', why: 'Field#get 返回 Object，不能直接与 int 比较' },
-  { rel: 'dev/js/mtrheadlight/sss/ColorCopy.java', from: '         return (boolean)target;\n', to: '         return false;\n', why: '走到这行时 target 一定是 0（tex == -1）→ 原意是 false' },
-  { rel: 'dev/js/mtrheadlight/signal/FangsuSignalSync.java', from: 'private static void applyAspect(Map<?, ?> raw, int aspect)', to: 'private static void applyAspect(Map<String, Object> raw, int aspect)', why: 'Map<?,?> 不能 put' },
-  { rel: 'dev/js/mtrheadlight/signal/FangsuTrafficLightMode.java', from: 'private static void acceptRaw(Consumer<?> consumer, int value)', to: 'private static void acceptRaw(Consumer<Object> consumer, int value)', why: 'Consumer<?> 不能 accept(int)' },
-  { rel: 'dev/js/mtrheadlight/signal/FangsuTrafficLightMode.java', from: 'Map<?, ?> map = (Map)var4;', to: 'Map<Object, Object> map = (Map)var4;', why: 'Map<?,?> 不能 put' },
-  { rel: 'dev/js/mtrheadlight/ProtoBeamCone.java', from: '      int var10002 = GATE[index]++;\n      var10002 = WC[index]++;\n', to: '      GATE[index]++;\n      WC[index]++;\n', why: '计数器自增的返回值被塞进 int（GATE 是 long[]）；返回值本来就没用' },
-  { rel: 'dev/js/mtrheadlight/signal/FangsuSignalSync.java', from: 'Map<?, ?> map = (Map)var9;', to: 'Map<String, Object> map = (Map)var9;', why: 'applyAspect 的实参也要是 Map<String,Object>' },
-  { rel: 'dev/js/mtrheadlight/signal/FangsuTrafficLightMode.java', from: 'Consumer<?> c = (Consumer)consumer;', to: 'Consumer<Object> c = (Consumer)consumer;', why: 'acceptRaw 现在吃 Consumer<Object>' },
-  { rel: 'dev/js/mtrheadlight/BeamEditor3DScreen.java', from: 'rows.sort(Comparator.comparing((row) -> !row.inUse).thenComparing((row) -> row.id, String.CASE_INSENSITIVE_ORDER));', to: 'rows.sort(Comparator.comparing((BeamEditor3DScreen.VehicleRow row) -> !row.inUse).thenComparing((BeamEditor3DScreen.VehicleRow row) -> row.id, String.CASE_INSENSITIVE_ORDER));', why: 'lambda 形参类型被擦成 Object' },
-  { rel: 'dev/js/mtrheadlight/BeamEditor3DScreen.java', from: 'for(int axis = 0; axis < 3; ++axis) {\n            this.transformButtons.add((Button)this.addRenderableWidget(Button.builder(tr("beam3d.transform.flip", BeamGizmo.nameOf(axis)), (b) -> this.flipAxis(axis))', to: 'for(int axis = 0; axis < 3; ++axis) {\n            int axisIdx = axis;\n            this.transformButtons.add((Button)this.addRenderableWidget(Button.builder(tr("beam3d.transform.flip", BeamGizmo.nameOf(axis)), (b) -> this.flipAxis(axisIdx))', why: 'lambda 捕获 for 变量（非 effectively final）→ 每次迭代取一份 final 副本' },
-  { rel: 'dev/js/mtrheadlight/BeamEditor3DScreen.java', from: 'BeamGizmo.nameOf(axis)), (b) -> this.rotateAxis90(axis))', to: 'BeamGizmo.nameOf(axis)), (b) -> this.rotateAxis90(axisIdx))', why: '同上（rot90 那个 lambda）' },
+  { rel: 'dev/js/lte/CustomPack.java', from: '.orElse((Object)null)', to: '.orElse((String)null)', why: 'Optional<String>.orElse 参数被擦成 Object' },
+  { rel: 'dev/js/lte/BeamPackWriter.java', from: '.orElse((Object)null)', to: '.orElse((Path)null)', why: 'Optional<Path>.orElse 参数被擦成 Object' },
+  { rel: 'dev/js/lte/BeamPackWriter.java', from: 'new ArrayList(((VehicleLightOverrides.Vehicle)result.vehicles.get(0)).beams)', to: 'new ArrayList<VehicleLightOverrides.Beam>(((VehicleLightOverrides.Vehicle)result.vehicles.get(0)).beams)', why: '裸 ArrayList 使三元式退化成 List<Object>' },
+  { rel: 'dev/js/lte/bind/MtrTiles.java', re: /new LinkedHashSet\(\(Set\)value\)/g, to: 'new LinkedHashSet<Long>((Set)value)', why: 'Set<Object> → Set<Long>：补类型参数（两处）' },
+  { rel: 'dev/js/lte/VehicleLightOverrides.java', from: 'TreeMap var9 = new TreeMap();', to: 'TreeMap<String, List<VehicleLightOverrides.Beam>> var9 = new TreeMap<>();', why: '裸 TreeMap 让 keySet()/entrySet() 退化成 Object' },
+  { rel: 'dev/js/lte/VehicleLightOverrides.java', from: 'auto = new LinkedHashMap();', to: 'auto = new LinkedHashMap<String, List<VehicleLightOverrides.Beam>>();', why: '同上：auto 需要 String→List<Beam> 的类型' },
+  { rel: 'dev/js/lte/collision/RailBed.java', re: /\(\(Map\)(railsMap|endsRaw|innerRaw)\)/g, to: '((Map<?, ?>)$1)', why: '裸 Map 的 entrySet 元素是 Object，换成 Map<?,?> 后才是 Entry<?,?>' },
+  { rel: 'dev/js/lte/DebugProbe.java', from: 'new ArrayList(ClientData.TRAINS)', to: 'new ArrayList<TrainClient>(ClientData.TRAINS)', why: '裸 ArrayList 让 for 变量退化成 Object' },
+  { rel: 'dev/js/lte/ShaderPackProbe.java', from: 'optifineActiveProgram.get((Object)null) != 0', to: '((Number)optifineActiveProgram.get((Object)null)).intValue() != 0', why: 'Field#get 返回 Object，不能直接与 int 比较' },
+  { rel: 'dev/js/lte/sss/ColorCopy.java', from: '         return (boolean)target;\n', to: '         return false;\n', why: '走到这行时 target 一定是 0（tex == -1）→ 原意是 false' },
+  { rel: 'dev/js/lte/signal/FangsuSignalSync.java', from: 'private static void applyAspect(Map<?, ?> raw, int aspect)', to: 'private static void applyAspect(Map<String, Object> raw, int aspect)', why: 'Map<?,?> 不能 put' },
+  { rel: 'dev/js/lte/signal/FangsuTrafficLightMode.java', from: 'private static void acceptRaw(Consumer<?> consumer, int value)', to: 'private static void acceptRaw(Consumer<Object> consumer, int value)', why: 'Consumer<?> 不能 accept(int)' },
+  { rel: 'dev/js/lte/signal/FangsuTrafficLightMode.java', from: 'Map<?, ?> map = (Map)var4;', to: 'Map<Object, Object> map = (Map)var4;', why: 'Map<?,?> 不能 put' },
+  { rel: 'dev/js/lte/ProtoBeamCone.java', from: '      int var10002 = GATE[index]++;\n      var10002 = WC[index]++;\n', to: '      GATE[index]++;\n      WC[index]++;\n', why: '计数器自增的返回值被塞进 int（GATE 是 long[]）；返回值本来就没用' },
+  { rel: 'dev/js/lte/signal/FangsuSignalSync.java', from: 'Map<?, ?> map = (Map)var9;', to: 'Map<String, Object> map = (Map)var9;', why: 'applyAspect 的实参也要是 Map<String,Object>' },
+  { rel: 'dev/js/lte/signal/FangsuTrafficLightMode.java', from: 'Consumer<?> c = (Consumer)consumer;', to: 'Consumer<Object> c = (Consumer)consumer;', why: 'acceptRaw 现在吃 Consumer<Object>' },
+  { rel: 'dev/js/lte/BeamEditor3DScreen.java', from: 'rows.sort(Comparator.comparing((row) -> !row.inUse).thenComparing((row) -> row.id, String.CASE_INSENSITIVE_ORDER));', to: 'rows.sort(Comparator.comparing((BeamEditor3DScreen.VehicleRow row) -> !row.inUse).thenComparing((BeamEditor3DScreen.VehicleRow row) -> row.id, String.CASE_INSENSITIVE_ORDER));', why: 'lambda 形参类型被擦成 Object' },
+  { rel: 'dev/js/lte/BeamEditor3DScreen.java', from: 'for(int axis = 0; axis < 3; ++axis) {\n            this.transformButtons.add((Button)this.addRenderableWidget(Button.builder(tr("beam3d.transform.flip", BeamGizmo.nameOf(axis)), (b) -> this.flipAxis(axis))', to: 'for(int axis = 0; axis < 3; ++axis) {\n            int axisIdx = axis;\n            this.transformButtons.add((Button)this.addRenderableWidget(Button.builder(tr("beam3d.transform.flip", BeamGizmo.nameOf(axis)), (b) -> this.flipAxis(axisIdx))', why: 'lambda 捕获 for 变量（非 effectively final）→ 每次迭代取一份 final 副本' },
+  { rel: 'dev/js/lte/BeamEditor3DScreen.java', from: 'BeamGizmo.nameOf(axis)), (b) -> this.rotateAxis90(axis))', to: 'BeamGizmo.nameOf(axis)), (b) -> this.rotateAxis90(axisIdx))', why: '同上（rot90 那个 lambda）' },
 
   // --- 重映射残留：单字母 obf 方法名没被改名（Yarn 名在映射表里对不上） ---
-  { rel: 'dev/js/mtrheadlight/bind/DisplayPushTicker.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
-  { rel: 'dev/js/mtrheadlight/collision/CollisionSystem.java', re: /\.ac\(\)/g, to: '.getPlayerList()', why: 'MinecraftServer#ac() → getPlayerList()' },
-  { rel: 'dev/js/mtrheadlight/collision/MobCollision.java', re: /\.ag\(\)/g, to: '.getTickCount()', why: 'MinecraftServer#ag() → getTickCount()' },
-  { rel: 'dev/js/mtrheadlight/collision/MobCollision.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
-  { rel: 'dev/js/mtrheadlight/Commands.java', re: /\.ac\(\)/g, to: '.getPlayerList()', why: 'MinecraftServer#ac() → getPlayerList()' },
-  { rel: 'dev/js/mtrheadlight/server/ServerCollision.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
-  { rel: 'dev/js/mtrheadlight/server/ServerCollision.java', re: /\.ag\(\)/g, to: '.getTickCount()', why: 'MinecraftServer#ag() → getTickCount()' },
-  { rel: 'dev/js/mtrheadlight/server/ServerCollision.java', re: /\.l\(\)/g, to: '.isDedicatedServer()', why: 'MinecraftServer#l() → isDedicatedServer()' },
-  { rel: 'dev/js/mtrheadlight/VehicleLightPacks.java', re: /\.a\(LevelResource\.DATAPACK_DIR\)/g, to: '.getWorldPath(LevelResource.DATAPACK_DIR)', why: 'MinecraftServer#a(LevelResource) → getWorldPath(LevelResource)' },
+  { rel: 'dev/js/lte/bind/DisplayPushTicker.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
+  { rel: 'dev/js/lte/collision/CollisionSystem.java', re: /\.ac\(\)/g, to: '.getPlayerList()', why: 'MinecraftServer#ac() → getPlayerList()' },
+  { rel: 'dev/js/lte/collision/MobCollision.java', re: /\.ag\(\)/g, to: '.getTickCount()', why: 'MinecraftServer#ag() → getTickCount()' },
+  { rel: 'dev/js/lte/collision/MobCollision.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
+  { rel: 'dev/js/lte/Commands.java', re: /\.ac\(\)/g, to: '.getPlayerList()', why: 'MinecraftServer#ac() → getPlayerList()' },
+  { rel: 'dev/js/lte/server/ServerCollision.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
+  { rel: 'dev/js/lte/server/ServerCollision.java', re: /\.ag\(\)/g, to: '.getTickCount()', why: 'MinecraftServer#ag() → getTickCount()' },
+  { rel: 'dev/js/lte/server/ServerCollision.java', re: /\.l\(\)/g, to: '.isDedicatedServer()', why: 'MinecraftServer#l() → isDedicatedServer()' },
+  { rel: 'dev/js/lte/VehicleLightPacks.java', re: /\.a\(LevelResource\.DATAPACK_DIR\)/g, to: '.getWorldPath(LevelResource.DATAPACK_DIR)', why: 'MinecraftServer#a(LevelResource) → getWorldPath(LevelResource)' },
 
   // --- mixin 选择器：yarn 名 → mojmap 名（Forge 侧由 refmap 再映射到 SRG） ---
-  { rel: 'dev/js/mtrheadlight/mixin/beamlight/BeamLightMixin.java', from: 'getLightmapCoordinates(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)I', to: 'getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I', why: 'LevelRenderer: getLightmapCoordinates → getLightColor（mojmap）' },
-  { rel: 'dev/js/mtrheadlight/mixin/rain/WorldRendererRainMixin.java', from: 'renderWeather(Lnet/minecraft/client/render/LightmapTextureManager;FDDD)V', to: 'renderSnowAndRain(Lnet/minecraft/client/renderer/LightTexture;FDDD)V', why: 'LevelRenderer: renderWeather → renderSnowAndRain（mojmap）' },
-  { rel: 'dev/js/mtrheadlight/mixin/rain/WorldRendererRainMixin.java', from: 'tickRainSplashing(Lnet/minecraft/client/render/Camera;)V', to: 'tickRain(Lnet/minecraft/client/Camera;)V', why: 'LevelRenderer: tickRainSplashing → tickRain（mojmap）' },
-  { rel: 'dev/js/mtrheadlight/mixin/scatter/GameRendererScatterMixin.java', from: 'renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V', to: 'renderLevel(FJLcom/mojang/blaze3d/vertex/PoseStack;)V', why: 'GameRenderer: renderWorld → renderLevel（mojmap）' },
-  { rel: 'dev/js/mtrheadlight/mixin/fangsu/FangsuTurnoutRenderMixin.java', from: 'Lcom/fangsu/blockEntities/client/BaseBlockEntityRender;render(Lcom/fangsu/blockEntities/BaseObjBlockEntity;FLnet/minecraft/class_4587;Lnet/minecraft/class_4597;II)V', to: 'Lcom/fangsu/blockEntities/client/BaseBlockEntityRender;render(Lcom/fangsu/blockEntities/BaseObjBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V', why: '@At target 里的 intermediary 名 → mojmap（PoseStack / MultiBufferSource）' },
-  { rel: 'dev/js/mtrheadlight/mixin/fangsu/FangsuTurnoutRenderMixin.java', from: '@Mixin(\n   targets = {"com.fangsu.blocks.client.TurnoutBlockEntityRenderer"}\n)', to: '@Mixin(\n   targets = {"com.fangsu.blocks.client.TurnoutBlockEntityRenderer"},\n   remap = false\n)', why: '可选宿主（方速）内部名不做 refmap 重映射' },
+  { rel: 'dev/js/lte/mixin/beamlight/BeamLightMixin.java', from: 'getLightmapCoordinates(Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)I', to: 'getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I', why: 'LevelRenderer: getLightmapCoordinates → getLightColor（mojmap）' },
+  { rel: 'dev/js/lte/mixin/rain/WorldRendererRainMixin.java', from: 'renderWeather(Lnet/minecraft/client/render/LightmapTextureManager;FDDD)V', to: 'renderSnowAndRain(Lnet/minecraft/client/renderer/LightTexture;FDDD)V', why: 'LevelRenderer: renderWeather → renderSnowAndRain（mojmap）' },
+  { rel: 'dev/js/lte/mixin/rain/WorldRendererRainMixin.java', from: 'tickRainSplashing(Lnet/minecraft/client/render/Camera;)V', to: 'tickRain(Lnet/minecraft/client/Camera;)V', why: 'LevelRenderer: tickRainSplashing → tickRain（mojmap）' },
+  { rel: 'dev/js/lte/mixin/scatter/GameRendererScatterMixin.java', from: 'renderWorld(FJLnet/minecraft/client/util/math/MatrixStack;)V', to: 'renderLevel(FJLcom/mojang/blaze3d/vertex/PoseStack;)V', why: 'GameRenderer: renderWorld → renderLevel（mojmap）' },
+  { rel: 'dev/js/lte/mixin/fangsu/FangsuTurnoutRenderMixin.java', from: 'Lcom/fangsu/blockEntities/client/BaseBlockEntityRender;render(Lcom/fangsu/blockEntities/BaseObjBlockEntity;FLnet/minecraft/class_4587;Lnet/minecraft/class_4597;II)V', to: 'Lcom/fangsu/blockEntities/client/BaseBlockEntityRender;render(Lcom/fangsu/blockEntities/BaseObjBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V', why: '@At target 里的 intermediary 名 → mojmap（PoseStack / MultiBufferSource）' },
+  { rel: 'dev/js/lte/mixin/fangsu/FangsuTurnoutRenderMixin.java', from: '@Mixin(\n   targets = {"com.fangsu.blocks.client.TurnoutBlockEntityRenderer"}\n)', to: '@Mixin(\n   targets = {"com.fangsu.blocks.client.TurnoutBlockEntityRenderer"},\n   remap = false\n)', why: '可选宿主（方速）内部名不做 refmap 重映射' },
   // MTR 侧：ServerCommandSource#sendFeedback(Supplier, boolean) 是 mojmap 名，不用改。
 ];
 
 /** Mixin 类里 `(Target)this` 的强转：javac 不认「@Mixin 目标 = 隐式父类」，
  *  Forge 侧没有 Loom 那个 javac 插件，必须绕一层 Object。 */
 const MIXIN_SELF_CAST = [
-  { rel: 'dev/js/mtrheadlight/mixin/collision/MixinEntityMove.java', type: 'Entity' },
-  { rel: 'dev/js/mtrheadlight/mixin/mtrserver/RailwayDataCaptureMixin.java', type: 'RailwayData' },
-  { rel: 'dev/js/mtrheadlight/mixin/mtrserver/TrainSimulateCaptureMixin.java', type: 'TrainServer' },
-  { rel: 'dev/js/mtrheadlight/mixin/registry/SimpleRegistryFreezeMixin.java', type: 'Registry' },
+  { rel: 'dev/js/lte/mixin/collision/MixinEntityMove.java', type: 'Entity' },
+  { rel: 'dev/js/lte/mixin/mtrserver/RailwayDataCaptureMixin.java', type: 'RailwayData' },
+  { rel: 'dev/js/lte/mixin/mtrserver/TrainSimulateCaptureMixin.java', type: 'TrainServer' },
+  { rel: 'dev/js/lte/mixin/registry/SimpleRegistryFreezeMixin.java', type: 'Registry' },
 ];
 
 /* ---------------- 源码遮罩（字符串/注释 → 空白），用于精确的括号匹配 ---------------- */

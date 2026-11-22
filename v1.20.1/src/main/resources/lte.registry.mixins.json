@@ -1,7 +1,7 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "dev.js.mtrheadlight.mixin.registry",
+  "package": "dev.js.lte.mixin.registry",
   "compatibilityLevel": "JAVA_17",
   "refmap": "lte.refmap.json",
   "mixins": [

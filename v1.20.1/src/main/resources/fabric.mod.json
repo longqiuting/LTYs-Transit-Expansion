@@ -37,14 +37,14 @@
   ],
   "entrypoints": {
     "main": [
-      "dev.js.mtrheadlight.server.LteServer",
-      "dev.js.mtrheadlight.VehicleLightsJsonServer"
+      "dev.js.lte.server.LteServer",
+      "dev.js.lte.VehicleLightsJsonServer"
     ],
     "client": [
-      "dev.js.mtrheadlight.LteClient"
+      "dev.js.lte.LteClient"
     ],
     "modmenu": [
-      "dev.js.mtrheadlight.ModMenuIntegration"
+      "dev.js.lte.ModMenuIntegration"
     ]
   },
   "depends": {
