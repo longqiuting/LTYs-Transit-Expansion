@@ -5,10 +5,10 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "lte.forge.refmap.json",
   "mixins": [
-    "collision.MixinEntityMove",
     "registry.SimpleRegistryFreezeMixin"
   ],
   "client": [
+    "collision.MixinEntityMove",
     "beamlight.BeamLightMixin",
     "rain.WorldRendererRainMixin",
     "scatter.GameRendererScatterMixin"

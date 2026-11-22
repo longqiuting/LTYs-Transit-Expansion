@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# M4b-1：一条命令产出「同时可装 Fabric 与 Forge」的单 jar。
+# M4b-9：一条命令产出「同时可装 Fabric 与 Forge」的单 jar。
 #
 #   tools/merge-single-jar.sh                # 全量：Fabric build → Forge build → Forgix 合并
 #   SKIP_BUILD=1 tools/merge-single-jar.sh   # 只重跑合并（两侧产物已在）
 #
-# 产物：merge/build/libs/LTYs-Transit-Expansion-Decoration-3.0.0.jar
+# 产物：merge/build/libs/LTYs-Transit-Expansion-3.0.0.jar
 #
 # JDK / Gradle 分工（三个步骤各自不同，别混）：
 #   Fabric  build : JDK 21 + Gradle 8.14（Loom 1.11.8 要求 ≥8.14；仓库根 wrapper 是 8.8，会直接报错）
@@ -22,7 +22,7 @@ GRADLE="${GRADLE:-D:/MC-MTR-JS/temp/gradle/gradle-8.14/bin/gradle}"
 
 cd "$ROOT"
 
-if [[ ! -x "$GRADLE" ]]; then
+if [ ! -x "$GRADLE" ] && [ ! -f "$GRADLE.bat" ]; then
   echo "!! 找不到 Gradle 8.14：$GRADLE（Loom 1.11.8 要求 ≥8.14）" >&2
   echo "   用 GRADLE=/path/to/gradle-8.14/bin/gradle 覆盖" >&2
   exit 1
@@ -39,7 +39,7 @@ fi
 echo "== [3/3] Forgix 合并（JDK 21 + Gradle 8.14）"
 JAVA_HOME="$JDK21" "$GRADLE" -p merge mergeJars --console=plain
 
-OUT="merge/build/libs/LTYs-Transit-Expansion-Decoration-3.0.0.jar"
+OUT="merge/build/libs/LTYs-Transit-Expansion-3.0.0.jar"
 echo
 echo "产物：$OUT"
 ls -l "$OUT"

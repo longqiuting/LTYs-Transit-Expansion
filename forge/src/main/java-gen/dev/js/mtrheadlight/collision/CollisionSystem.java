@@ -34,6 +34,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class CollisionSystem {
+   /** 物理客户端判定：专用服务端上 net.minecraft.client.* 被 RuntimeDistCleaner 拦截。 */
+   private static final boolean CLIENT =
+         dev.js.mtrheadlight.forge.platform.FabricLoader.getInstance().getEnvironmentType()
+               == dev.js.mtrheadlight.forge.platform.EnvType.CLIENT;
    private static final double SEARCH_RANGE = 48.0D;
    private static final double PUSH_EPS = 0.001D;
    private static final double SIDE_INSET = 0.05D;
@@ -1187,8 +1191,14 @@ public final class CollisionSystem {
    }
 
    private static boolean isLocal(Entity entity) {
+      // 专用服务端上 net.minecraft.client.* 被 RuntimeDistCleaner 拦住（"invalid dist DEDICATED_SERVER"），
+      // 一旦执行到 Minecraft/LocalPlayer 的引用就整服崩。判据放在最前：服务端直接 false。
+      if (!CLIENT || entity == null || !entity.level().isClientSide()) {
+         return false;
+      }
+
       Minecraft client = Minecraft.getInstance();
-      return client != null && entity instanceof LocalPlayer && entity == client.player && entity.level().isClientSide();
+      return entity instanceof LocalPlayer && entity == client.player;
    }
 
    private static void resetDiag() {

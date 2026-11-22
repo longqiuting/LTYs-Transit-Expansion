@@ -1,0 +1,62 @@
+// Forgix 1.2.9 合并 Fabric + Forge 产物为单个 jar（M4b-9）。
+//
+// 前置：先分别构建两侧产物（脚本 tools/merge-single-jar.sh 会按顺序跑）
+//   gradle-8.14 -p v1.20.1 build          (JDK 21 → v1.20.1/build/libs/LTYs-Transit-Expansion-3.0.0.jar)
+//   forge/gradlew -p forge build          (JDK 17 → forge/build/reobfJar/output.jar)
+// 然后：
+//   gradle-8.14 -p merge mergeJars        (JDK 21，Forgix 跑在 Gradle daemon 里)
+//
+// 注意：Fabric 侧 Loom 1.11.8 要求 Gradle ≥8.14，仓库根 wrapper 是 8.8，不能用。
+plugins {
+    id 'io.github.pacifistmc.forgix' version '1.2.9'
+}
+
+group = 'dev.js.mtrheadlight'
+
+// 版本号从两侧的 gradle.properties 读，避免三处各写一遍（两侧不一致就直接失败）。
+def readProp = { String path, String key ->
+    def p = new Properties()
+    new File(projectDir, path).withInputStream { p.load(it) }
+    p.getProperty(key)
+}
+def fabricVersion = readProp('../v1.20.1/gradle.properties', 'mod_version')
+def forgeVersion = readProp('../forge/gradle.properties', 'mod_version')
+if (fabricVersion != forgeVersion) {
+    throw new GradleException("两侧版本号不一致：fabric=${fabricVersion} forge=${forgeVersion}")
+}
+version = fabricVersion
+
+def fabricJarName = readProp('../v1.20.1/gradle.properties', 'archives_base_name')
+
+forgix {
+    // 合并后 jar 的 group 与文件名（不带 -forge / -fabric 后缀）
+    group = 'dev.js.mtrheadlight'
+    mergedJarName = "${fabricJarName}-${fabricVersion}.jar"
+    outputDir = 'build/libs'
+
+    fabric {
+        projectName = 'fabric'                 // settings.gradle 里的空壳子项目名
+        // 相对子项目 projectDir（即 ../v1.20.1）定位
+        jarLocation = "build/libs/${fabricJarName}-${fabricVersion}.jar"
+    }
+
+    forge {
+        projectName = 'forge'
+        // 用 reobf 产物（Forge 运行期要 SRG 名）
+        jarLocation = 'build/reobfJar/output.jar'
+    }
+}
+
+// 方便重复执行：mergeJars 之前先确认两侧产物在，不在就直接报错，不要产出空包。
+tasks.named('mergeJars') {
+    doFirst {
+        def fabricJar = new File(project(':fabric').projectDir, "build/libs/${fabricJarName}-${fabricVersion}.jar")
+        def forgeJar = new File(project(':forge').projectDir, 'build/reobfJar/output.jar')
+        [fabricJar, forgeJar].each {
+            if (!it.isFile() || it.length() == 0) {
+                throw new GradleException("缺少输入产物：${it}（先跑 tools/merge-single-jar.sh 或各自 build）")
+            }
+        }
+        logger.lifecycle("Forgix 输入：\n  fabric = ${fabricJar} (${fabricJar.length()} B)\n  forge  = ${forgeJar} (${forgeJar.length()} B)")
+    }
+}
