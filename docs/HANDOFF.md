@@ -113,6 +113,39 @@ cd /d/MC-MTR-JS/fabric-test-lted && (sleep 70; echo stop) | "C:/Program Files/Ja
 
 两边 `mods/` 现在都是共存状态（MTR + architectury + LTE + LTED）。
 
+## M4b-13：LTE 补回仪表板物品（`lte:dashboard`）+ 测试环境双 jar
+
+拆分时把「打开配置界面的入口物品」落在 LTED，LTE 只剩界面、没有物品能打开它。已补回：
+
+- 新类 `v1.20.1/src/main/java/dev/js/lte/bind/LteDashboardItem.java`（`dev.js.lte.bind`）：
+  服务端 `PASS`；客户端反射 `dev.js.lte.MtrHeadlightClient#openConfigScreen()`（与 `/mtr_lte config`、
+  键位同一个入口，反射是为了 dedicated server 上没有那个类也不炸）。
+- `signal/LteCoreItems`：`DASHBOARD_ID = lte:dashboard`，注册 + `entries.add`，
+  `TOOLS_TAB_ORDER` 最前（页签顺序：仪表板 → 灯光编辑器 → 三个连接器）。
+- 资源：`assets/lte/models/item/dashboard.json`（`layer0: lte:item/dashboard`）、
+  `assets/lte/textures/item/dashboard.png`（LTED 仓库 `654fa91^` 的 `lte_dashboard.png` 原图，32×32，
+  3838 B，未缩放）、`lang` 中英 `item.lte.dashboard` + 两条 tooltip。
+- Forge 侧：`tools/remap-to-mojmap.sh` → `tools/fix-java-gen.sh` → `forge/gradlew -p forge clean build`
+  → `SKIP_BUILD=1 tools/merge-single-jar.sh`。
+
+**踩过的坑**：`tools/remap-to-mojmap.sh` 清 `.remap-work/plain` 时只删非 `.java`
+（`find "$WORK/plain" -type f ! -name '*.java' -delete`），改名前的
+`forge/src/main/java-gen/dev/js/mtrheadlight/**` 会被 `cp -r` 原样带回，javac 报 2 个假错。
+改完包名后必须先 `rm -rf .remap-work forge/src/main/java-gen/dev/js/mtrheadlight` 再跑。
+
+验收：Fabric/Forge `clean build` 均绿；单 jar 591 条目（587 + 3 资源 + 1 类），无重复条目，
+`assets/lte/{models,textures}/item/dashboard.*` 与 `fabric/`、`forge/` 两棵树里的
+`bind/LteDashboardItem.class` 都在。Forge 服务端 `Done (2.463s)`、0 ERROR，
+`summon item ... {Item:{id:"lte:dashboard"}}` → `Summoned new LTE dashboard`，
+`data get` 打出 `{id: "lte:dashboard", Count: 1b}`；对照组 `lte:no_such_item_xyz` → `Unknown item`。
+Forge 客户端到主菜单：`Found valid mod file ... {lte}` + `{mtrlte}`，0 ERROR。
+**创造页签里是否真的显示，需用户目视确认**（服务端无法证明页签渲染）。
+
+遗留（不在本次范围）：LTED 自己的 `mtrlte:lted_dashboard` 模型引用
+`mtrlte:item/lte_dashboard`，但那张贴图在 LTED 仓库 `654fa91` 被删了 —— 客户端报
+`Missing textures in model mtrlte:lted_dashboard#inventory`。LTED 侧补图即可。
+另有 Forge 客户端 `lte:spray` 粒子注册晚于 RegisterEvent（WARN，回落 `minecraft:cloud`）。
+
 ## 已知遗留（不影响明天主线）
 
 - `Reg.*` 目前仍收已构造实例（靠「把 onInitialize 挪进首个 RegisterEvent」解决冻结），彻底干净需改收 Supplier：java-gen 103 处 / 26 文件，牵动静态字段取实例语义

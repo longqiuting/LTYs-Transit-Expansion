@@ -4,6 +4,7 @@ import dev.js.lte.forge.platform.Reg;
 import dev.js.lte.LteLog;
 import dev.js.lte.TabIcons;
 import dev.js.lte.bind.BeamEditorItem;
+import dev.js.lte.bind.LteDashboardItem;
 import dev.js.lte.bind.PidsConnectorItem;
 import dev.js.lte.bind.ProjectorConnectorItem;
 import java.util.ArrayList;
@@ -27,12 +28,14 @@ public final class LteCoreItems {
    public static final ResourceLocation PROJECTOR_CONNECTOR_ID = new ResourceLocation("lte", "projector_connector");
    public static final ResourceLocation PIDS_CONNECTOR_ID = new ResourceLocation("lte", "pids_connector");
    public static final ResourceLocation BEAM_EDITOR_ID = new ResourceLocation("lte", "beam_editor");
+   public static final ResourceLocation DASHBOARD_ID = new ResourceLocation("lte", "dashboard");
    public static final ResourceLocation TOOLS_TAB_ID = new ResourceLocation("lte", "tools");
-   private static final List<ResourceLocation> TOOLS_TAB_ORDER = List.of(BEAM_EDITOR_ID, SIGNAL_LINKER_ID, PROJECTOR_CONNECTOR_ID, PIDS_CONNECTOR_ID);
+   private static final List<ResourceLocation> TOOLS_TAB_ORDER = List.of(DASHBOARD_ID, BEAM_EDITOR_ID, SIGNAL_LINKER_ID, PROJECTOR_CONNECTOR_ID, PIDS_CONNECTOR_ID);
    private static SignalLinkItem signalLinker;
    private static ProjectorConnectorItem projectorConnector;
    private static PidsConnectorItem pidsConnector;
    private static BeamEditorItem beamEditor;
+   private static LteDashboardItem dashboard;
    private static boolean registered;
 
    private LteCoreItems() {
@@ -54,6 +57,10 @@ public final class LteCoreItems {
       return beamEditor;
    }
 
+   public static LteDashboardItem dashboard() {
+      return dashboard;
+   }
+
    public static void register() {
       if (!registered) {
          registered = true;
@@ -61,9 +68,11 @@ public final class LteCoreItems {
          projectorConnector = (ProjectorConnectorItem)Reg.item( PROJECTOR_CONNECTOR_ID, new ProjectorConnectorItem((new Item.Properties()).stacksTo(1)));
          pidsConnector = (PidsConnectorItem)Reg.item( PIDS_CONNECTOR_ID, new PidsConnectorItem((new Item.Properties()).stacksTo(1)));
          beamEditor = (BeamEditorItem)Reg.item( BEAM_EDITOR_ID, new BeamEditorItem((new Item.Properties()).stacksTo(1)));
+         dashboard = (LteDashboardItem)Reg.item( DASHBOARD_ID, new LteDashboardItem((new Item.Properties()).stacksTo(1)));
          TabIcons.register();
          Reg.tab( TOOLS_TAB_ID, CreativeModeTab.builder().title(Component.translatable("itemGroup.lte.tools")).icon(() -> new ItemStack(TabIcons.tools())).build());
          ItemGroupEvents.modifyEntriesEvent(ResourceKey.create(Registries.CREATIVE_MODE_TAB, TOOLS_TAB_ID)).register((ItemGroupEvents.ModifyEntries)(entries) -> {
+            entries.add(dashboard);
             entries.add(signalLinker);
             entries.add(projectorConnector);
             entries.add(pidsConnector);

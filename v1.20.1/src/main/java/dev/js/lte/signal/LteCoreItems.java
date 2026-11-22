@@ -7,6 +7,7 @@ import java.util.List;
 import dev.js.lte.LteLog;
 import dev.js.lte.TabIcons;
 import dev.js.lte.bind.BeamEditorItem;
+import dev.js.lte.bind.LteDashboardItem;
 import dev.js.lte.bind.PidsConnectorItem;
 import dev.js.lte.bind.ProjectorConnectorItem;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
@@ -40,13 +41,13 @@ import net.minecraft.util.Identifier;
  *
  * <p>页签 id 是 {@code lte:tools}（「LTE 工具」）。
  *
- * <p>页签里的东西：{@code signal_linker}（信号灯 → 轨道节点）、{@code projector_connector}
- * （投影机 → 车站）、{@code pids_connector}（PIDS → 站台）、{@code beam_editor}（右键开 3D
- * 光束编辑器）。前三件是服务端权威的绑定工具，第四件只在客户端打开界面 —— 但<b>四件物品都在两端
- * 注册</b>：只在客户端注册的物品在服务器上是「未知物品」，联机时会掉。
+ * <p>页签里的东西（顺序由 {@link #pinToolsTabOrder()} 钉死）：{@code dashboard}（右键开配置界面）、
+ * {@code beam_editor}（右键开 3D 光束编辑器）、{@code signal_linker}（信号灯 → 轨道节点）、
+ * {@code projector_connector}（投影机 → 车站）、{@code pids_connector}（PIDS → 站台）。前两件只在客户端
+ * 打开界面 —— 但<b>五件物品都在两端注册</b>：只在客户端注册的物品在服务器上是「未知物品」，联机时会掉。
  *
- * <p>装饰侧（LTED）的 {@code lte_dashboard} / LTE logo / 贴墙标识不在本模组里 —— 拆分后它们
- * 随装饰仓库走，本页签也就不再有这几项。
+ * <p>装饰侧（LTED）的 {@code lted_dashboard} / LTE logo / 贴墙标识不在本模组里 —— 拆分后它们随装饰仓库走，
+ * 本页签里的是普通工具，不含装饰方块。
  */
 public final class LteCoreItems {
 
@@ -62,12 +63,16 @@ public final class LteCoreItems {
     /** 物品 id：{@code lte:beam_editor}（右键开 3D 光束编辑器，仅客户端）。 */
     public static final Identifier BEAM_EDITOR_ID = new Identifier("lte", "beam_editor");
 
+    /** 物品 id：{@code lte:dashboard}（右键开配置界面，仅客户端）。 */
+    public static final Identifier DASHBOARD_ID = new Identifier("lte", "dashboard");
+
     /** 页签 id：{@code lte:tools}。 */
     public static final Identifier TOOLS_TAB_ID = new Identifier("lte", "tools");
 
     /**
      * 「LTE 工具」页签的最终顺序（从前往后）：
      * <ol>
+     *   <li>{@code dashboard} —— 配置界面（仪表板）；</li>
      *   <li>{@code beam_editor} —— 车灯 / 光束编辑器；</li>
      *   <li>{@code signal_linker} → {@code projector_connector} → {@code pids_connector}
      *       —— 三个连接器，内部顺序不变。</li>
@@ -76,6 +81,7 @@ public final class LteCoreItems {
      * 回调按注册顺序执行，早了就看不见后加的条目。
      */
     private static final List<Identifier> TOOLS_TAB_ORDER = List.of(
+            DASHBOARD_ID,
             BEAM_EDITOR_ID,
             SIGNAL_LINKER_ID,
             PROJECTOR_CONNECTOR_ID,
@@ -85,6 +91,7 @@ public final class LteCoreItems {
     private static ProjectorConnectorItem projectorConnector;
     private static PidsConnectorItem pidsConnector;
     private static BeamEditorItem beamEditor;
+    private static LteDashboardItem dashboard;
     private static boolean registered;
 
     private LteCoreItems() {
@@ -106,6 +113,10 @@ public final class LteCoreItems {
         return beamEditor;
     }
 
+    public static LteDashboardItem dashboard() {
+        return dashboard;
+    }
+
     public static void register() {
         if (registered) {
             return;
@@ -122,6 +133,9 @@ public final class LteCoreItems {
         // 车灯编辑器：右键开 3D 光束编辑器（和 /mtr_lte beam3d 同一个屏幕）。
         beamEditor = Registry.register(Registries.ITEM, BEAM_EDITOR_ID,
                 new BeamEditorItem(new Item.Settings().maxCount(1)));
+        // 仪表板：右键开配置界面（和 /mtr_lte config、键位同一个屏幕）。
+        dashboard = Registry.register(Registries.ITEM, DASHBOARD_ID,
+                new LteDashboardItem(new Item.Settings().maxCount(1)));
 
         // 页签图标：不是本页签里的任何物品，而是一个只画图标的物品（见 TabIcons 的类注释）。
         TabIcons.register();
@@ -134,6 +148,7 @@ public final class LteCoreItems {
 
         ItemGroupEvents.modifyEntriesEvent(RegistryKey.of(RegistryKeys.ITEM_GROUP, TOOLS_TAB_ID))
                 .register(entries -> {
+                    entries.add(dashboard);
                     entries.add(signalLinker);
                     entries.add(projectorConnector);
                     entries.add(pidsConnector);
@@ -142,7 +157,7 @@ public final class LteCoreItems {
     }
 
     /**
-     * 把「LTE 工具」页签重排成 {@link #TOOLS_TAB_ORDER}：光束编辑器 → 三个连接器。
+     * 把「LTE 工具」页签重排成 {@link #TOOLS_TAB_ORDER}：仪表板 → 光束编辑器 → 三个连接器。
      *
      * <h2>为什么不是「谁后注册谁在后」</h2>
      * <p>页签条目由 {@code ItemGroupEvents.modifyEntriesEvent} 的回调按<b>注册顺序</b>拼出来。
