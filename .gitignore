@@ -1,0 +1,19 @@
+# 构建产物
+build/
+.gradle/
+out/
+*.class
+
+# 临时脚本 / 探针输出（不随仓库发布）
+temp/
+javac.*.args
+*.log
+
+# 编辑器
+.idea/
+*.iml
+.vscode/
+
+# 本地凭据（绝不入库）
+*.token
+.env
