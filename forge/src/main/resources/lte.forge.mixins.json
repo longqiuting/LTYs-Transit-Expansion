@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.js.mtrheadlight.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "lte.forge.refmap.json",
+  "mixins": [
+    "collision.MixinEntityMove",
+    "registry.SimpleRegistryFreezeMixin"
+  ],
+  "client": [
+    "beamlight.BeamLightMixin",
+    "rain.WorldRendererRainMixin",
+    "scatter.GameRendererScatterMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

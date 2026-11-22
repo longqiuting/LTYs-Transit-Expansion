@@ -1,0 +1,128 @@
+// LTE 的 Forge 侧模块（1.20.1 / Forge 47.4.0）。
+// 与 v1.20.1/（Fabric + Loom）完全隔离：各自是独立 root project，互不引用对方的构建脚本。
+// 构建：在仓库根执行  ./gradlew -p forge build   （JAVA_HOME 指向 JDK 17）
+buildscript {
+    repositories {
+        // 镜像优先，官方源兜底（本机直连 maven.minecraftforge.net 会读超时）。
+        maven { name = 'ForgeMirror'; url = 'https://maven.creeperhost.net' }
+        maven { name = 'Forge'; url = 'https://maven.minecraftforge.net/' }
+        maven { name = 'Mojang'; url = 'https://libraries.minecraft.net/' }
+        mavenCentral()
+    }
+    dependencies {
+        // ForgeGradle 6 —— MC 1.20.1 / Forge 47.x 这一代的官方工具链
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.0.24', changing: true
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'java'
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+}
+
+minecraft {
+    // official = Mojang 官方映射（mojmap）。Forge 1.17+ 的运行期就是 official 类名 + SRG 成员名，
+    // 所以这里不能写 yarn / MCP stable。
+    mappings channel: 'official', version: "${project.minecraft_version}"
+}
+
+repositories {
+    maven { name = 'ForgeMirror'; url = 'https://maven.creeperhost.net' }
+    maven { name = 'Forge'; url = 'https://maven.minecraftforge.net/' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.forge_version}"
+
+    // YMTR 的 Forge 版，只做编译期依赖（运行期由已安装的 MTR 提供）。
+    // 这份 jar 本身已按 mojmap 编译，不需要 remap。
+    compileOnly files("libs/MTR-forge-1.20.1-3.6.6.1.jar")
+}
+
+// 把 remap-to-mojmap.sh 产出的 137 个 mojmap 反编译源码当「一个源集」整体编。
+// java-gen 是生成物（脚本可重跑覆盖），所以修复也走脚本（tools/fix-java-gen.sh），
+// 不在 java-gen 里手工修改单文件——重跑管线会覆盖。
+// 资源不再复制：Fabric 树是资源真身，这里把 v1.20.1/src/main/resources 直接并进
+// Forge 的资源源集，与 forge 自己的 META-INF/mods.toml、mixin 配置合并成一个 jar。
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java-gen'
+        }
+        resources {
+            srcDirs = ['src/main/resources', '../v1.20.1/src/main/resources']
+            // Fabric 专属元数据不能进 Forge jar：
+            //   fabric.mod.json      —— Forge 不认
+            //   lte.*.mixins.json    —— 选择器是 yarn 名；Forge 侧用 lte.forge.mixins.json
+            exclude 'fabric.mod.json'
+            exclude 'lte.beamlight.mixins.json'
+            exclude 'lte.collision.mixins.json'
+            exclude 'lte.fangsu.mixins.json'
+            exclude 'lte.mtr.mixins.json'
+            exclude 'lte.mtrserver.mixins.json'
+            exclude 'lte.rain.mixins.json'
+            exclude 'lte.registry.mixins.json'
+            exclude 'lte.scatter.mixins.json'
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+    // 全量 137 文件一起编，默认 100 条错误上限不够做分类统计。
+    options.compilerArgs += ['-Xmaxerrs', '5000']
+}
+
+// 诊断用：导出 compileJava 的完整 classpath（全量 javac 分类统计要用）
+tasks.register('printCompileCp') {
+    doLast {
+        println "CP_BEGIN"
+        println sourceSets.main.compileClasspath.asPath
+        println "CP_END"
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // mods.toml 里有中文；Groovy 的 expand 默认按平台编码读（本机 GBK），必须显式 UTF-8。
+    filteringCharset = 'UTF-8'
+    filesMatching('META-INF/mods.toml') {
+        expand 'version': project.version,
+               'forge_version': project.forge_version,
+               'minecraft_version': project.minecraft_version
+    }
+    from(file('../LICENSE')) { into 'META-INF' rename { 'LICENSE-lte' } }
+    from(file('../NOTICE.md')) { into 'META-INF' rename { 'NOTICE-lte.md' } }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title'     : 'lte',
+                'Specification-Vendor'    : 'LTE',
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.version,
+                'Implementation-Vendor'   : 'LTE',
+                // Forge 1.20.1 靠 jar 清单里的 MixinConfigs 发现 mixin
+                // （ModFileParser 不读 mods.toml 的 [[mixins]]，那是 NeoForge 才有的段落）。
+                // 一个 config 只能挂一个 plugin，所以按宿主分成 4 份：
+                //   通用（无 plugin）/ MTR 客户端 / MTR 服务端 / 方速（可选宿主）。
+                'MixinConfigs'            : 'lte.forge.mixins.json,lte.forge.mtr.mixins.json,'
+                        + 'lte.forge.mtrserver.mixins.json,lte.forge.fangsu.mixins.json'
+        ])
+    }
+}

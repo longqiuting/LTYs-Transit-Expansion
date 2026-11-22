@@ -1,0 +1,43 @@
+modLoader = "javafml"
+loaderVersion = "[47,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/longqiuting/mtr-external-lights/issues"
+
+[[mods]]
+modId = "lte"
+version = "${version}"
+displayName = "LTE"
+authors = "厦航在拍车的无名机长 (kigurumiLTY)"
+description = '''
+LTE —— MTR 的灯光与物理优化（Forge 侧）：动态车头灯 / 车尾灯与可见光柱、屏幕空间散射、雨雾与水花、列车碰撞与撞飞、道床判定，以及信号灯 / 投影机 / PIDS 连接器与 3D 光束编辑器。
+'''
+
+[[dependencies.lte]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.lte]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1,1.20.2)"
+ordering = "NONE"
+side = "BOTH"
+
+# 运行期由已安装的 MTR Forge 版提供。
+# versionRange 必须匹配 MTR 实际的版本字符串：YMTR forge 的 mods.toml 写的是
+# version = "1.20.1-3.6.6.1"，Maven 序比较下 "3.6" 反而比它大（首段 3 > 1），
+# 写成 "[3.6,)" 会被判为「已安装但不受支持」→ Forge 直接拒绝加载（即使 mandatory=false）。
+[[dependencies.lte]]
+modId = "mtr"
+mandatory = false
+versionRange = "[1.20.1-3.6,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Forge 1.20.1 实际是读 jar 清单的 MixinConfigs 属性（build.gradle 的 jar.manifest 里已写），
+# 这一节是 NeoForge 的写法，1.20.1 的 ModFileInfo 只按 key 取自己认识的字段。
+[[mixins]]
+config = "lte.forge.mixins.json"

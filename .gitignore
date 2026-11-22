@@ -17,3 +17,6 @@ javac.*.args
 # 本地凭据（绝不入库）
 *.token
 .env
+.remap-work/
+forge/build/
+forge/.gradle/
