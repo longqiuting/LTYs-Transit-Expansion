@@ -56,7 +56,7 @@ public final class BeamGlow {
       long now = System.currentTimeMillis();
       if (now - diagAt >= 5000L) {
          diagAt = now;
-         if (windowOn) {
+         if (windowOn && LteDebug.lights()) {
             HeadlightConfig cfg = MtrHeadlightClient.config();
             if (cfg == null) {
                MtrHeadlightClient.LOGGER.info("[lte] glow: cars={} beams={} dirFix={}", new Object[]{dCars, dBeams, dDirFix});

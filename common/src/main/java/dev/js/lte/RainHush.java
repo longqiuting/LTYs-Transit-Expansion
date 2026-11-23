@@ -294,6 +294,10 @@ public final class RainHush {
             return;
         }
         lastInside = now;
+        // 诊断行默认关（-Dlte.debug.rain=true 才打）；状态照旧记，进出转换不会被这条闸门打乱。
+        if (!LteDebug.rain()) {
+            return;
+        }
         MtrHeadlightClient.LOGGER.info(
                 "[lte] rain: inside=true train={} car={} along={}/{} lat={} feet={} floor={} roof={}",
                 train.trainId, Integer.valueOf(car),
@@ -305,11 +309,11 @@ public final class RainHush {
     private static void diag(final HeadlightConfig cfg, final boolean inside) {
         if (inside != lastInside && !inside) {
             lastInside = false;
-            if (cfg.rainHushDiagnostics) {
+            if (cfg.rainHushDiagnostics && LteDebug.rain()) {
                 MtrHeadlightClient.LOGGER.info("[lte] rain: inside=false");
             }
         }
-        if (!cfg.rainHushDiagnostics) {
+        if (!cfg.rainHushDiagnostics || !LteDebug.rain()) {
             return;
         }
         final long now = System.currentTimeMillis();

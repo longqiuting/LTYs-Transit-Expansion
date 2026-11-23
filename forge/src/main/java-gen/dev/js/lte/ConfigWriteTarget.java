@@ -55,8 +55,7 @@ abstract class ConfigWriteTarget {
    static final int SCATTER = 36;
    static final int SCATTER_SURFACE = 38;
    static final int SCATTER_SHADERS = 42;
-   static final int FANGSU_DOOR_SOUND = 43;
-   static final int[] ALL_TOGGLES = new int[]{0, 1, 2, 41, 4, 5, 6, 7, 8, 9, 10, 11, 36, 38, 42, 43};
+   static final int[] ALL_TOGGLES = new int[]{0, 1, 2, 41, 4, 5, 6, 7, 8, 9, 10, 11, 36, 38, 42};
    final Supplier<HeadlightConfig> cfg;
 
    ConfigWriteTarget(Supplier<HeadlightConfig> cfg) {
@@ -401,8 +400,6 @@ abstract class ConfigWriteTarget {
                return this.config().beamFlare;
             case 42:
                return this.config().scatterUnderShaders;
-            case 43:
-               return this.config().fangsuDoorSound;
          }
       }
 
@@ -484,8 +481,6 @@ abstract class ConfigWriteTarget {
             case 42:
                this.config().scatterUnderShaders = on;
                break;
-            case 43:
-               this.config().fangsuDoorSound = on;
          }
 
       }
@@ -713,8 +708,6 @@ abstract class ConfigWriteTarget {
             case 42:
                c.scatterUnderShaders = d.scatterUnderShaders;
                break;
-            case 43:
-               c.fangsuDoorSound = d.fangsuDoorSound;
          }
 
       }
@@ -788,7 +781,6 @@ abstract class ConfigWriteTarget {
          c.scatterUnderShaders = d.scatterUnderShaders;
          c.scatterStrength = d.scatterStrength;
          c.scatterRadius = d.scatterRadius;
-         c.fangsuDoorSound = d.fangsuDoorSound;
          if (c.sidingSettings != null) {
             c.sidingSettings.clear();
          }
@@ -877,7 +869,6 @@ abstract class ConfigWriteTarget {
             case 36:
             case 38:
             case 42:
-            case 43:
                ConfigWriteTarget.ignored(which);
                return 0.0D;
             case 29:
@@ -956,7 +947,6 @@ abstract class ConfigWriteTarget {
             case 36:
             case 38:
             case 42:
-            case 43:
                ConfigWriteTarget.ignored(which);
                break;
             case 29:
@@ -1017,7 +1007,6 @@ abstract class ConfigWriteTarget {
             case 36:
             case 38:
             case 42:
-            case 43:
                ConfigWriteTarget.ignored(which);
                return false;
             case 8:
@@ -1083,7 +1072,6 @@ abstract class ConfigWriteTarget {
             case 36:
             case 38:
             case 42:
-            case 43:
                ConfigWriteTarget.ignored(which);
                break;
             case 8:
@@ -1173,7 +1161,6 @@ abstract class ConfigWriteTarget {
                case 36:
                case 38:
                case 42:
-               case 43:
                   ConfigWriteTarget.ignored(which);
                   return true;
                case 29:
@@ -1236,7 +1223,6 @@ abstract class ConfigWriteTarget {
                case 36:
                case 38:
                case 42:
-               case 43:
                   ConfigWriteTarget.ignored(which);
                   return true;
                case 8:
@@ -1345,7 +1331,6 @@ abstract class ConfigWriteTarget {
                case 36:
                case 38:
                case 42:
-               case 43:
                   ConfigWriteTarget.ignored(which);
                   break;
                case 29:
@@ -1414,7 +1399,6 @@ abstract class ConfigWriteTarget {
                case 36:
                case 38:
                case 42:
-               case 43:
                   ConfigWriteTarget.ignored(which);
                   break;
                case 8:

@@ -1068,7 +1068,10 @@ public final class VehicleLights {
                 return;
             }
             ANNOUNCED.put(id, Boolean.TRUE);
-            MtrHeadlightClient.LOGGER.info("[lte] {}", layout.diagnostic(id));
+            // 一行/车型的灯位诊断；默认关（-Dlte.debug.lights=true 才打），是"周期性 INFO"那一类。
+            if (LteDebug.lights()) {
+                MtrHeadlightClient.LOGGER.info("[lte] {}", layout.diagnostic(id));
+            }
             if (!layout.error.isEmpty()) {
                 MtrHeadlightClient.LOGGER.warn("[lte] lights: {} parse note: {}", id, layout.error);
             }

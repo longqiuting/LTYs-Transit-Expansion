@@ -13,6 +13,9 @@ public final class RenderHooks {
    }
 
    private static void traceLightBranches(HeadlightConfig cfg) {
+      if (!LteDebug.lights()) {
+         return;
+      }
       long now = System.currentTimeMillis();
       if (now - lightsAt >= 5000L) {
          lightsAt = now;

@@ -188,19 +188,21 @@ public final class RainHush {
       boolean now = true;
       if (!lastInside) {
          lastInside = true;
-         MtrHeadlightClient.LOGGER.info("[lte] rain: inside=true train={} car={} along={}/{} lat={} feet={} floor={} roof={}", new Object[]{train.trainId, car, fmt(along), fmt(len), fmt(lat), fmt(player.getY()), fmt(floor), fmt(floor + height)});
+         if (LteDebug.rain()) {
+            MtrHeadlightClient.LOGGER.info("[lte] rain: inside=true train={} car={} along={}/{} lat={} feet={} floor={} roof={}", new Object[]{train.trainId, car, fmt(along), fmt(len), fmt(lat), fmt(player.getY()), fmt(floor), fmt(floor + height)});
+         }
       }
    }
 
    private static void diag(HeadlightConfig cfg, boolean inside) {
       if (inside != lastInside && !inside) {
          lastInside = false;
-         if (cfg.rainHushDiagnostics) {
+         if (cfg.rainHushDiagnostics && LteDebug.rain()) {
             MtrHeadlightClient.LOGGER.info("[lte] rain: inside=false");
          }
       }
 
-      if (cfg.rainHushDiagnostics) {
+      if (cfg.rainHushDiagnostics && LteDebug.rain()) {
          long now = System.currentTimeMillis();
          if (lastLogMs == 0L || now - lastLogMs >= 5000L) {
             lastLogMs = now;

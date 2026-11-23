@@ -172,8 +172,10 @@ public final class HeadlightConfig {
      * seconds, so a "刷新线路 / 清除车辆" run can be confirmed from the log without a debugger.
      *
      * <p>{@code tracked} and {@code missing} are the current tick's numbers, {@code massClear} is
-     * how many trains' lights the fast path removed during the window (0 = it never fired). Default
-     * on while the mass-clear link is being validated; set it to {@code false} for a quiet log.
+     * how many trains' lights the fast path removed during the window (0 = it never fired).
+     *
+     * <p><b>默认关</b>：这一行还要再过 {@link LteDebug#clear()}（{@code -Dlte.debug.clear=true}），
+     * 否则每 5 秒一条 INFO 会把日志刷脏。诊断逻辑本身仍在跑，只是不打印。
      */
     public boolean massClearDiagnostics = true;
 
@@ -769,8 +771,10 @@ public final class HeadlightConfig {
      *
      * <p>五个字段各自独立，一行就能定位问题出在哪一环：{@code mode} 是当前模式，{@code openSky}
      * 是露天判定的原始结论，{@code night} 是时钟判定，{@code sky} 是天空亮度（0.20 = 午夜，
-     * 1.00 = 正午），{@code lit} 是这道闸的最终结论。默认开，在
-     * {@code config/lte.json} 里设为 {@code false} 可关。
+     * 1.00 = 正午），{@code lit} 是这道闸的最终结论。
+     *
+     * <p><b>默认关</b>：这一行还要再过 {@link LteDebug#lights()}（{@code -Dlte.debug.lights=true}）；
+     * {@code config/lte.json} 里把本键设为 {@code false} 也能单独关掉，两者是「与」。
      */
     public boolean weatherDiagnostics = true;
 
@@ -872,9 +876,10 @@ public final class HeadlightConfig {
      *
      * <p>{@code trains} 是这一窗内通过「下雨 + 超速 + 距离 64 格」的车次数（按列车去重），
      * {@code spawned} 是真正发出的粒子数，{@code skipped} 是被限流（每车每 tick 上限、
-     * 全局每 tick/每秒预算、以及低速时的概率抽签）挡下来的候选数。默认开；在
-     * {@code config/lte.json} 里把 {@code rainSprayDiagnostics} 设为 {@code false}
-     * 即可彻底闭嘴。
+     * 全局每 tick/每秒预算、以及低速时的概率抽签）挡下来的候选数。
+     *
+     * <p><b>默认关</b>：这一行还要再过 {@link LteDebug#spray()}（{@code -Dlte.debug.spray=true}），
+     * 否则每 5 秒一条 INFO（还带每车一行 spray-diag）会把日志刷脏。
      */
     public boolean rainSprayDiagnostics = true;
 
@@ -915,6 +920,8 @@ public final class HeadlightConfig {
      * <p>{@code frames} 是 {@code renderWeather} 的注入点被调用的次数 —— 它恒为 0 说明 mixin 没
      * 落地或这条渲染路径没走（不是「开了但没生效」）。{@code suppressed} 是真正 cancel 掉的帧数。
      * 进/出车厢各多打一行 {@code rain: inside=true/false ...}。
+     *
+     * <p><b>默认关</b>：这些行还要再过 {@link LteDebug#rain()}（{@code -Dlte.debug.rain=true}）。
      */
     public boolean rainHushDiagnostics = true;
 
@@ -1417,24 +1424,6 @@ public final class HeadlightConfig {
      * {@code true} 不会让它重新默认打开，其余的键照旧读取。
      */
     public boolean collisionDiagnostics = false;
-
-    // ---------------------------------------------------------------------------------------------
-    // 方速（BRT）滑动屏蔽门的开关门音效
-    // ---------------------------------------------------------------------------------------------
-
-    /**
-     * 方速滑动屏蔽门（{@code fangsu_psd_screendoor_low/high_left|right}）开 / 关时播
-     * {@code lte:brt_door}。默认开。
-     *
-     * <p><b>只看客户端</b>：音效在渲染器里播（{@code FangsuPsdDoorEntity#tickDoorSound}），
-     * 服务端完全不参与，所以这个开关是每个玩家各自的偏好，不进 MTR 的同步。
-     *
-     * <p>它是<b>全局</b>开关，和每块门自己的 NBT 开关（MTR 刷子右键切换）是<b>与</b>关系：
-     * 关掉这里 = 全地图的门一并不响，但不会改写任何一块门的 NBT —— 重新打开就回到各自的设置。
-     *
-     * <p>界面上在「全局配置 → 其他」那一分区（那是唯一的杂项分区）。
-     */
-    public boolean fangsuDoorSound = true;
 
     // ---------------------------------------------------------------------------------------------
     // Per-siding overrides

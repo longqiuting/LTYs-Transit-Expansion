@@ -69,7 +69,7 @@ public final class LightController {
                }
             }
 
-            List<String> skyLines = cfg.weatherDiagnostics && tickCounter % 100L == 0L ? new ArrayList() : null;
+            List<String> skyLines = cfg.weatherDiagnostics && LteDebug.lights() && tickCounter % 100L == 0L ? new ArrayList() : null;
 
             for(TrainClient train : trains) {
                if (train != null && !train.isRemoved && !train.path.isEmpty() && train.trainCars > 0 && (!cfg.onlyTrains || train.transportMode == TransportMode.TRAIN)) {
@@ -192,7 +192,7 @@ public final class LightController {
             }
 
             BeamBlockLight.publish(beams == null ? null : trimBeams(beams, beamCount));
-            ClearDiag.tick(cfg.massClearDiagnostics, tickCounter, trackedCount, missingNow);
+            ClearDiag.tick(cfg.massClearDiagnostics && LteDebug.clear(), tickCounter, trackedCount, missingNow);
          } else {
             clear();
          }

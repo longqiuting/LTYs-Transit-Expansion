@@ -480,7 +480,7 @@ public final class RainSpray {
    }
 
    private static void report(HeadlightConfig cfg, ClientLevel world, boolean raining) {
-      if (!cfg.rainSprayDiagnostics) {
+      if (!cfg.rainSprayDiagnostics || !LteDebug.spray()) {
          resetWindow();
       } else if (tick % 100L == 0L) {
          int trains = windowTrains.size();

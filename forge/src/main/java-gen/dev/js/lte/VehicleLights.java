@@ -712,7 +712,9 @@ public final class VehicleLights {
          }
 
          ANNOUNCED.put(id, Boolean.TRUE);
-         MtrHeadlightClient.LOGGER.info("[lte] {}", layout.diagnostic(id));
+         if (LteDebug.lights()) {
+            MtrHeadlightClient.LOGGER.info("[lte] {}", layout.diagnostic(id));
+         }
          if (!layout.error.isEmpty()) {
             MtrHeadlightClient.LOGGER.warn("[lte] lights: {} parse note: {}", id, layout.error);
          }

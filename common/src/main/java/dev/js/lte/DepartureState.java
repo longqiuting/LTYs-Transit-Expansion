@@ -111,11 +111,10 @@ public final class DepartureState {
 
     /**
      * Temporary diagnostic, one INFO line every {@value #DIAG_PERIOD} ticks:
-     * {@code depart: trains=N onRoute=M moved=K lit=L}. Turn it off with
-     * {@code -Dmtrheadlight.departdiag=false} (or by flipping this constant).
+     * {@code depart: trains=N onRoute=M moved=K lit=L}. Off by default: turned on with
+     * {@code -Dlte.debug.lights=true} together with the rest of the headlight diagnostics.
      */
-    private static final boolean DIAG =
-            !"false".equalsIgnoreCase(System.getProperty("mtrheadlight.departdiag", "true"));
+    private static final boolean DIAG = LteDebug.lights();
     private static final int DIAG_PERIOD = 100;
 
     private static final Map<String, Entry> TRACKED = new HashMap<>();

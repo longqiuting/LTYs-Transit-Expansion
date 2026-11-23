@@ -18,7 +18,7 @@ public final class DepartureState {
    private static final int DEPART_STEPS = 10;
    private static final int STILL_TICKS_TO_CLEAR = 60;
    private static final double IDLE_SPEED_EPSILON = 0.01D;
-   private static final boolean DIAG = !"false".equalsIgnoreCase(System.getProperty("mtrheadlight.departdiag", "true"));
+   private static final boolean DIAG = LteDebug.lights();
    private static final int DIAG_PERIOD = 100;
    private static final Map<String, DepartureState.Entry> TRACKED = new HashMap();
    private static ClientLevel lastWorld;

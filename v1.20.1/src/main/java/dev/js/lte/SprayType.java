@@ -82,8 +82,11 @@ public final class SprayType {
                     "[lte] could not register the {} particle, falling back to minecraft:cloud", ID, t);
         }
         resolved = false;
-        MtrHeadlightClient.LOGGER.info(
-                "[lte] spray particle type={} registered={} ({})", ID, Boolean.valueOf(registered), note);
+        // 一次性自检行，但仍然只在 -Dlte.debug.spray=true 时出现（默认日志不许有 [lte] spray）。
+        if (LteDebug.spray()) {
+            MtrHeadlightClient.LOGGER.info(
+                    "[lte] spray particle type={} registered={} ({})", ID, Boolean.valueOf(registered), note);
+        }
     }
 
     /**
@@ -111,7 +114,9 @@ public final class SprayType {
         }
         self = true;
         note = "Sodium Extra has no entry for " + ID + " -> getOrDefault(id, TRUE) lets it through";
-        MtrHeadlightClient.LOGGER.info("[lte] spray: using {} ({})", ID, note);
+        if (LteDebug.spray()) {
+            MtrHeadlightClient.LOGGER.info("[lte] spray: using {} ({})", ID, note);
+        }
     }
 
     private static void ensureResolved() {

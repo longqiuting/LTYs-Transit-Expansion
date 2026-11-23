@@ -147,7 +147,9 @@ public final class LightController {
         }
 
         // 露天/开关灯诊断的收集器：只在窗口那一 tick 分配，其余 99 tick 是 null。
-        final List<String> skyLines = cfg.weatherDiagnostics
+        // 默认关：这一窗口会把每列车的 auto light: 行 + 汇总行打出来，属于"周期性 INFO"，
+        // 统一走 -Dlte.debug.lights（见 LteDebug），否则日志会被刷满。
+        final List<String> skyLines = cfg.weatherDiagnostics && LteDebug.lights()
                 && tickCounter % WEATHER_DIAG_TICKS == 0L ? new ArrayList<String>() : null;
 
         for (final TrainClient train : trains) {
@@ -359,7 +361,8 @@ public final class LightController {
         BeamBlockLight.publish(beams == null ? null : trimBeams(beams, beamCount));
         // tracked/missing are the numbers the decision above used (before the batch was removed),
         // so "tracked=12 missing=12 massClear=12" reads as one event rather than as an empty state.
-        ClearDiag.tick(cfg.massClearDiagnostics, tickCounter, trackedCount, missingNow);
+        ClearDiag.tick(cfg.massClearDiagnostics && LteDebug.clear(), tickCounter, trackedCount,
+                missingNow);
     }
 
     /**

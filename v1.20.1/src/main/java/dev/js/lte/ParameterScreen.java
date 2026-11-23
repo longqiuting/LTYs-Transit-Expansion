@@ -537,10 +537,6 @@ public final class ParameterScreen extends Screen {
                 if (isGlobal()) {
                     // ---- 开关 ----
                     this.rows.add(Row.toggleWide(ConfigWriteTarget.BUILTIN_TRAINS));
-                    // 门音响：方速（BRT 高 / 低）滑动屏蔽门开 / 关时播 lte:brt_door。
-                    // 全局开关，与每块门自己的 NBT 开关（MTR 刷子右键）是「与」关系；
-                    // 音效在客户端渲染器里播，所以这一行只影响本机。
-                    this.rows.add(Row.toggleWide(ConfigWriteTarget.FANGSU_DOOR_SOUND));
                     // ---- 动作 ----
                     this.rows.add(Row.action(tr("btn.reloadTrains"), this::reloadTrains));
                     // 厦门 PIDS 设置 / 全局广告集 / 时钟全局配置已经<b>搬走</b>了：它们是 LTED（装饰侧）
@@ -817,10 +813,6 @@ public final class ParameterScreen extends Screen {
                 // 同上，全局开关；只有开光影时才看得出区别。
                 return tr(this.target.readToggle(which)
                         ? "opt.scatterShaders.on" : "opt.scatterShaders.off");
-            case ConfigWriteTarget.FANGSU_DOOR_SOUND:
-                // 全局开关（音效只在客户端播），侧线页根本不生成这一行，所以不走 follow()。
-                return tr(this.target.readToggle(which)
-                        ? "opt.doorSound.on" : "opt.doorSound.off");
             default:
                 return follow(this.target.readToggle(which)
                         ? tr("opt.band.on") : tr("opt.band.off"), which);

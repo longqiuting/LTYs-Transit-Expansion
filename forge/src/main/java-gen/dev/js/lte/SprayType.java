@@ -43,7 +43,9 @@ public final class SprayType {
          }
 
          resolved = false;
-         MtrHeadlightClient.LOGGER.info("[lte] spray particle type={} registered={} ({})", new Object[]{"lte:spray", registered, note});
+         if (LteDebug.spray()) {
+            MtrHeadlightClient.LOGGER.info("[lte] spray particle type={} registered={} ({})", new Object[]{"lte:spray", registered, note});
+         }
       }
    }
 
@@ -57,7 +59,9 @@ public final class SprayType {
          } else {
             self = true;
             note = "Sodium Extra has no entry for lte:spray -> getOrDefault(id, TRUE) lets it through";
-            MtrHeadlightClient.LOGGER.info("[lte] spray: using {} ({})", "lte:spray", note);
+            if (LteDebug.spray()) {
+               MtrHeadlightClient.LOGGER.info("[lte] spray: using {} ({})", "lte:spray", note);
+            }
          }
       } else {
          self = false;

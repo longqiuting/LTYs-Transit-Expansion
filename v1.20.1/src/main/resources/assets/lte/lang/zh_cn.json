@@ -254,8 +254,6 @@
   "opt.damageInCreative.on": "创造模式也受伤：开",
   "opt.damageMax": "伤害上限 %s hp（0 = 不限）",
   "opt.distance": "渲染距离 %s",
-  "opt.doorSound.off": "门音响：关",
-  "opt.doorSound.on": "门音响：开",
   "opt.dynamicLight.off": "真实照亮：关",
   "opt.dynamicLight.on": "真实照亮：开",
   "opt.flare.off": "灯晕：关",

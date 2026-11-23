@@ -4,6 +4,10 @@ public final class LteDebug {
    public static final long PERIOD_MS = 30000L;
    private static final boolean COLLISION = flag("lte.debug.collision");
    private static final boolean PROBE = flag("lte.debug.probe") || COLLISION;
+   private static final boolean LIGHTS = flag("lte.debug.lights");
+   private static final boolean CLEAR = flag("lte.debug.clear");
+   private static final boolean RAIN = flag("lte.debug.rain");
+   private static final boolean SPRAY = flag("lte.debug.spray");
    private static long lastMs;
 
    private LteDebug() {
@@ -24,6 +28,22 @@ public final class LteDebug {
 
    public static boolean probe() {
       return PROBE;
+   }
+
+   public static boolean lights() {
+      return LIGHTS;
+   }
+
+   public static boolean clear() {
+      return CLEAR;
+   }
+
+   public static boolean rain() {
+      return RAIN;
+   }
+
+   public static boolean spray() {
+      return SPRAY;
    }
 
    public static boolean due() {

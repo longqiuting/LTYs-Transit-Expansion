@@ -480,7 +480,7 @@ public final class LightFlare {
          diagAt = now;
          HeadlightConfig cfg = MtrHeadlightClient.config();
          lastSkipText = "skipped=offRoute=" + SKIP_OFF_ROUTE.size() + " dark=" + SKIP_DARK.size() + " parked=" + SKIP_PARKED.size();
-         if (windowOn && cfg != null) {
+         if (windowOn && cfg != null && LteDebug.lights()) {
             MtrHeadlightClient.LOGGER.info("[lte] flare: band={} flare={} trains={} lamps={} quads={} noLamp={} {} drawn={} tex={}{}", new Object[]{cfg.beamBand, cfg.beamFlare, dTrains, dLamps, dQuads, dNoLamp, lastSkipText, dDrawn, dTexture, dDrawError == null ? "" : " err=" + dDrawError});
             MtrHeadlightClient.LOGGER.info("[lte] flare draw: quads={} depthFunc={} blend={} cull={} tex={} latePass={} passes=early {}/{} late {}/{} texId={} entered={} pack={}{}", new Object[]{dDrawQuads, funcName(dDrawDepthFunc), blendName(), dDrawCull ? "on" : "off", dTexture, dDrawLatePass, dEarlyOffers, dEarlyDraws, dLateOffers, dLateDraws, dDrawTextureId, funcName(dDrawDepthEntry), dPackActive, dDrawForceOcclusion ? "" : " (forceOcclusion=false: the depth func is whatever the previous caller left!)"});
             if (!dTestWindow) {

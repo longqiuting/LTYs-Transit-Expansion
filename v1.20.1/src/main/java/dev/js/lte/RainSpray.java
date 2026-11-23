@@ -862,7 +862,7 @@ public final class RainSpray {
      */
     private static void report(final HeadlightConfig cfg, final ClientWorld world,
                                final boolean raining) {
-        if (!cfg.rainSprayDiagnostics) {
+        if (!cfg.rainSprayDiagnostics || !LteDebug.spray()) {
             resetWindow();
             return;
         }

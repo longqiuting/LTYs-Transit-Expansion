@@ -736,7 +736,7 @@ public final class LightFlare {
         // 先定格本窗口的 skipped=，无论下面打不打日志都要能回答指令；随后清零。
         lastSkipText = "skipped=offRoute=" + SKIP_OFF_ROUTE.size() + " dark=" + SKIP_DARK.size()
                 + " parked=" + SKIP_PARKED.size();
-        if (windowOn && cfg != null) {
+        if (windowOn && cfg != null && LteDebug.lights()) {
             // band=… flare=… 是这一窗口渲染层实际用的两个值（就是 drawBand() / drawFlare()，
             // 与帧级门槛同一次调用）。它能当场回答"打开了灯晕为什么看不出区别"：数字变了 =
             // 写入与判定都通，问题在几何（facing / 距离 / alpha）；数字没变 = 写入那一步没生效。

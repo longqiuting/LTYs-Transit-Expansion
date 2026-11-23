@@ -465,7 +465,7 @@ public final class Commands {
                 + " blockLight=" + (cfg.beamBlockLight ? "on" : "off")
                 + " radius=" + cfg.beamBlockLightRadius
                 + " — 灯位：模型 LIGHT 部件 / builtin_lights.json / 尺寸兜底，"
-                + "逐车型诊断行见 [lte] lights:，每 5 秒汇总见 [lte] flare:"));
+                + "逐车型诊断行见 [lte] lights:，每 5 秒汇总见 [lte] flare:（需 -Dlte.debug.lights=true）"));
         // 自动开关的三档否决理由（最近一个 5 秒窗口，去重计数），紧跟在灯晕状态后面：
         // 用户看到的「车在车厂却亮着 / 该亮不亮」直接对应这里的某一段非零。
         source.sendFeedback(Text.literal("LTE：auto switch " + LightFlare.skipText()
@@ -504,7 +504,7 @@ public final class Commands {
         cfg.save();
         source.sendFeedback(Text.literal("LTE：光带=" + cfg.beamBand
                 + " 灯晕=" + cfg.beamFlare + " 散射=" + cfg.beamScatter
-                + "（渲染层每帧读这三个布尔；日志里那行 [lte] lights: 会在下一次绘制时出现）"));
+                + "（渲染层每帧读这三个布尔；-Dlte.debug.lights=true 时每 5 秒打一行 [lte] lights:）"));
         return 1;
     }
 

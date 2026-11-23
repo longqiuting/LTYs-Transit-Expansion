@@ -18,7 +18,8 @@ public final class RenderHooks {
     private static long lightsAt = System.currentTimeMillis();
 
     /**
-     * <b>常驻的「这一帧到底该画哪几层」一行</b>，每 5 秒一次，没有开关（也不需要开诊断）。
+     * <b>「这一帧到底该画哪几层」一行</b>，每 5 秒一次，<b>默认关</b>：
+     * {@code -Dlte.debug.lights=true} 才打（与 auto light / glow / flare / depart 同一闸门）。
      *
      * <pre>
      * [lte] lights: band=true flare=true scatter=false block=true test=false
@@ -42,6 +43,10 @@ public final class RenderHooks {
      * 上一次打印不到 5 秒就直接返回。
      */
     private static void traceLightBranches(final HeadlightConfig cfg) {
+        // 默认不打（-Dlte.debug.lights=true 才打）：它是每 5 秒一条的周期性 INFO。
+        if (!LteDebug.lights()) {
+            return;
+        }
         final long now = System.currentTimeMillis();
         if (now - lightsAt < 5000L) {
             return;

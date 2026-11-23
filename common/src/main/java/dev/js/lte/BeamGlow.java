@@ -200,7 +200,7 @@ public final class BeamGlow {
         // cars=参与几何的车节数，beams=真的写进缓冲的光束数，dirFix=用车身弦代替轨道切线的端数。
         // 过弯时 dirFix 应当等于有效端数（每列车 2）；若为 0 而 beams>0，说明弦退化了、走的是
         // 切线兜底 —— 那正是"弯道乱晃"的老症状。光带开关整窗口都没开时这一行不打。
-        if (windowOn) {
+        if (windowOn && LteDebug.lights()) {
             // band=… flare=… 与 [lte] flare: 那行同源（drawBand()/drawFlare()），
             // 两行并排就能看出"这一帧该画哪一套"和"实际画了几束"。
             final HeadlightConfig cfg = MtrHeadlightClient.config();

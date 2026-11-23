@@ -336,7 +336,6 @@ public final class ParameterScreen extends Screen {
          default:
             if (this.isGlobal()) {
                this.rows.add(ParameterScreen.Row.toggleWide(5));
-               this.rows.add(ParameterScreen.Row.toggleWide(43));
                this.rows.add(ParameterScreen.Row.action(tr("btn.reloadTrains"), this::reloadTrains));
             }
       }
@@ -570,8 +569,6 @@ public final class ParameterScreen extends Screen {
             return this.follow(this.target.readToggle(which) ? tr("opt.flare.on") : tr("opt.flare.off"), which);
          case 42:
             return tr(this.target.readToggle(which) ? "opt.scatterShaders.on" : "opt.scatterShaders.off");
-         case 43:
-            return tr(this.target.readToggle(which) ? "opt.doorSound.on" : "opt.doorSound.off");
       }
    }
 

@@ -148,7 +148,6 @@ public final class HeadlightConfig {
    public double trackbedThickness = 0.15D;
    public double trackbedStepUp = 1.0D;
    public boolean collisionDiagnostics = false;
-   public boolean fangsuDoorSound = true;
    private static final String CONFIG_FILE = "lte.json";
    private static final String[] LEGACY_CONFIG_FILES = new String[]{"mtr-external-lights.json", "mtr-headlight.json"};
 

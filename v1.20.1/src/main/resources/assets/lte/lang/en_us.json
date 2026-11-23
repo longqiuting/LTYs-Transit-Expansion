@@ -254,8 +254,6 @@
   "opt.damageInCreative.on": "Damage in Creative: on",
   "opt.damageMax": "Damage cap %s hp (0 = none)",
   "opt.distance": "Distance %s",
-  "opt.doorSound.off": "Door sounds: off",
-  "opt.doorSound.on": "Door sounds: on",
   "opt.dynamicLight.off": "Ground light: off",
   "opt.dynamicLight.on": "Ground light: on",
   "opt.flare.off": "Lamp glow: off",
