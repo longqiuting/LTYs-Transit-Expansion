@@ -109,7 +109,12 @@ public final class Net {
         // 只查已注册的频道，不在这里惰性建频道：注册期已过再 createInstance 会抛
         // IllegalArgumentException，而 canSend 是在玩家进服的 tick 上调用的。
         final SimpleChannel channel = connection == null ? null : CHANNELS.get(channelId);
-        return channel != null && channel.isRemotePresent(connection);
+        if (channel == null || channel.isRemotePresent(connection)) {
+            return channel != null;
+        }
+        // 本地有这条频道、对端没有 → 对端没装 LTE。留一条一次性 INFO，别静默失效。
+        noteMissingPeer(player, channelId);
+        return false;
     }
 
     public static boolean canSend(final ResourceLocation channelId) {
@@ -119,7 +124,11 @@ public final class Net {
             return false;
         }
         final SimpleChannel channel = CHANNELS.get(channelId);
-        return channel != null && channel.isRemotePresent(listener.getConnection());
+        if (channel == null || channel.isRemotePresent(listener.getConnection())) {
+            return channel != null;
+        }
+        noteMissingPeer(null, channelId);
+        return false;
     }
 
     public static void send(final ServerPlayer player, final ResourceLocation channelId,
