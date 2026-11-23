@@ -20,3 +20,5 @@ javac.*.args
 .remap-work/
 forge/build/
 forge/.gradle/
+libs/*.jar
+forge/libs/*.jar
