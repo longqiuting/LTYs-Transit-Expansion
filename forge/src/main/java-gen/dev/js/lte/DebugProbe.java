@@ -109,10 +109,15 @@ public final class DebugProbe {
          spawn(client);
       }
 
-      if (ticks % 100 == 0) {
+      if (ticks % 100 == 0 && logging()) {
          log(client);
       }
 
+   }
+
+   /** Periodic diagnostic line: off by default (-Dlte.debug.probe=true, LteDebug). */
+   public static boolean logging() {
+      return LteDebug.probe() || cone || coneBoost || spray;
    }
 
    private static void autoStart(Minecraft client) {

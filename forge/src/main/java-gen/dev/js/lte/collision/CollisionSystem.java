@@ -370,7 +370,7 @@ public final class CollisionSystem {
       CollisionImpact.suppressHurtTilt(client == null ? null : client.player);
       CollisionImpact.sweep(ticks);
       HeadlightConfig cfg = MtrHeadlightClient.config();
-      if (!cfg.collisionDiagnostics) {
+      if (!cfg.collisionDiagnostics && !LteDebug.collision()) {
          resetDiag();
       } else if (ticks % 100L == 0L) {
          int cars = diagCars;

@@ -2,6 +2,9 @@ package dev.js.lte;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,7 +20,7 @@ import dev.js.lte.forge.platform.FabricLoader;
 
 public final class HeadlightConfig {
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
-   private static final int CONFIG_VERSION = 26;
+   private static final int CONFIG_VERSION = 27;
    private static final int MIN_PX_FLOOR = 8;
    public static final int DEFAULT_HEAD_BEAM = 16774102;
    public static final int DEFAULT_TAIL_BEAM = 16738906;
@@ -144,7 +147,7 @@ public final class HeadlightConfig {
    public boolean trackbedCollisionItems = true;
    public double trackbedThickness = 0.15D;
    public double trackbedStepUp = 1.0D;
-   public boolean collisionDiagnostics = true;
+   public boolean collisionDiagnostics = false;
    public boolean fangsuDoorSound = true;
    private static final String CONFIG_FILE = "lte.json";
    private static final String[] LEGACY_CONFIG_FILES = new String[]{"mtr-external-lights.json", "mtr-headlight.json"};
@@ -513,7 +516,7 @@ public final class HeadlightConfig {
       if (Files.exists(path, new LinkOption[0])) {
          try {
             String json = Files.readString(path, StandardCharsets.UTF_8);
-            HeadlightConfig cfg = (HeadlightConfig)GSON.fromJson(json, HeadlightConfig.class);
+            HeadlightConfig cfg = (HeadlightConfig)GSON.fromJson(stripDiagnosticKeys(json), HeadlightConfig.class);
             if (cfg != null) {
                HeadlightConfig ready = cfg.sanitized();
                if (ready.migrate()) {
@@ -528,9 +531,31 @@ public final class HeadlightConfig {
       }
 
       HeadlightConfig cfg = new HeadlightConfig();
-      cfg.configVersion = 26;
+      cfg.configVersion = 27;
       cfg.save(path);
       return cfg;
+   }
+
+   /**
+    * Drops the diagnostic keys before deserialization so they fall back to "absent = the new
+    * default (off)". Rewriting the whole file would throw away everything the player tuned;
+    * a version bump alone would leave "collisionDiagnostics": true sitting in the file.
+    */
+   private static String stripDiagnosticKeys(String json) {
+      try {
+         JsonElement parsed = JsonParser.parseString(json);
+         if (!parsed.isJsonObject()) {
+            return json;
+         } else {
+            JsonObject obj = parsed.getAsJsonObject();
+            boolean removed = obj.remove("collisionDiagnostics") != null;
+            removed |= obj.remove("debugProbe") != null;
+            return removed ? GSON.toJson(obj) : json;
+         }
+      } catch (RuntimeException var4) {
+         LteLog.LOGGER.warn("[lte] could not strip diagnostic keys from config - reading it as-is", var4);
+         return json;
+      }
    }
 
    private static void migrateLegacyFile(Path configDir, Path target) {
@@ -553,7 +578,7 @@ public final class HeadlightConfig {
    }
 
    private boolean migrate() {
-      if (this.configVersion >= 26) {
+      if (this.configVersion >= 27) {
          return false;
       } else {
          if (this.configVersion < 3 && this.mutedSidings != null && !this.mutedSidings.isEmpty()) {
@@ -631,7 +656,7 @@ public final class HeadlightConfig {
             LteLog.LOGGER.info("[lte] \u7248\u672c 26\uff1a\u9ed8\u8ba4\u53ea\u5f00\u5149\u5e26\uff08\u5149\u5e26={} \u706f\u6655={} \u6563\u5c04={}\uff09\uff1b\u65e7\u6587\u4ef6\u91cc\u7684 \u706f\u6655={} \u6563\u5c04={} \u82e5\u4e3a\u65e7\u9ed8\u8ba4\u503c true \u5df2\u6309\u65b0\u9ed8\u8ba4\u6539\u4e3a false\uff0c\u8981\u5f00\u56de\u6765\u8bf7\u5728\u300c\u5149\u6e90\u300d\u9875\u628a\u5bf9\u5e94\u7684\u90a3\u4e00\u884c\u70b9\u5f00", new Object[]{this.beamBand, this.beamFlare, this.beamScatter, flareWasDefault, scatterWasDefault});
          }
 
-         this.configVersion = 26;
+         this.configVersion = 27;
          return true;
       }
    }

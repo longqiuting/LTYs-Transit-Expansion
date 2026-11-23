@@ -2,6 +2,9 @@ package dev.js.lte;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -25,7 +28,7 @@ import java.util.Map;
 public final class HeadlightConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     /** Bumped when a default changes in a way an existing file has to be migrated onto. */
-    private static final int CONFIG_VERSION = 26;
+    private static final int CONFIG_VERSION = 27;
 
     /**
      * 灯晕的硬像素底：无论配置写多少，一盏通过全部判定的灯在屏幕上至少占这么多 GUI 像素高。
@@ -1400,13 +1403,20 @@ public final class HeadlightConfig {
     }
 
     /**
-     * 碰撞诊断：每 5 秒一条 {@code collision: cars=N trackbed=Y pushed=N}（INFO）。默认开。
+     * 碰撞诊断：每 5 秒一条 {@code collision: cars=N trackbed=Y pushed=N}（INFO）。<b>默认关。</b>
+     *
+     * <p>它原来默认开，结果是每 5 秒一行 INFO 的心跳日志（300 列车、1 个玩家的服务器上一天几万行），
+     * 真正的错误反而被埋掉。现在默认零输出；要排查时用启动参数 {@code -Dlte.debug.collision=true}
+     * 打开（复用 {@link LteDebug#collision()}，已有的开关，不另造）。
      *
      * <p>{@code cars} 是这一窗内为本地玩家生成的车厢碰撞箱数量的峰值，{@code trackbed} 是最近一次
-     * 真正生效的道床面 y（没有生效过就是 {@code -}），{@code pushed} 是被推出车体的次数。窗口内
-     * 什么都没发生也照常打印 0 —— 静默和「没在跑」在日志里必须能区分。
+     * 真正生效的道床面 y（没有生效过就是 {@code -}），{@code pushed} 是被推出车体的次数。
+     * 打开后窗口内什么都没发生也照常打印 0 —— 静默和「没在跑」在日志里必须能区分。
+     *
+     * <p>加载时这个键会被<b>忽略</b>（见 {@link #stripDiagnosticKeys(String)}）：老配置文件里写着的
+     * {@code true} 不会让它重新默认打开，其余的键照旧读取。
      */
-    public boolean collisionDiagnostics = true;
+    public boolean collisionDiagnostics = false;
 
     // ---------------------------------------------------------------------------------------------
     // 方速（BRT）滑动屏蔽门的开关门音效
@@ -1885,7 +1895,7 @@ public final class HeadlightConfig {
         if (Files.exists(path)) {
             try {
                 final String json = Files.readString(path, StandardCharsets.UTF_8);
-                final HeadlightConfig cfg = GSON.fromJson(json, HeadlightConfig.class);
+                final HeadlightConfig cfg = GSON.fromJson(stripDiagnosticKeys(json), HeadlightConfig.class);
                 if (cfg != null) {
                     final HeadlightConfig ready = cfg.sanitized();
                     if (ready.migrate()) {
@@ -1901,6 +1911,42 @@ public final class HeadlightConfig {
         cfg.configVersion = CONFIG_VERSION;
         cfg.save(path);
         return cfg;
+    }
+
+    /**
+     * 把诊断开关的键从 JSON 里<b>删掉再反序列化</b>，让它们落回「缺键 = 类里的新默认（关）」。
+     *
+     * <p>为什么不是 bump {@code CONFIG_VERSION} 了就算：版本号只决定「要不要把文件重写一遍」，
+     * 它<b>不会</b>把已经写在文件里的 {@code "collisionDiagnostics": true} 改掉。玩家升级后老
+     * {@code lte.json} 里那一行还是 true，于是「默认关」对老用户等于没生效。反过来，直接整份
+     * 重置又会把玩家调好的几十个字段一起抹掉 —— 所以这里只动这两个诊断键：删键 → 字段停在
+     * {@code false} → 其余键（含每个侧线的覆盖）原样由 Gson 读进来。写回时由 {@link #save(Path)}
+     * 正常写出（此时写的是 {@code false}），文件与行为一致。
+     *
+     * <p>要打开诊断不靠这个键，靠启动参数 {@code -Dlte.debug.probe=true} /
+     * {@code -Dlte.debug.collision=true}（{@link LteDebug}），所以文件里那个键留着也没用。
+     *
+     * <p>解析失败 / 不是 JSON 对象时原样返回，交给 {@code GSON.fromJson} 走原来那条「读不了就用
+     * 默认值」的路 —— 这个函数永远不许把一份坏文件变成一次崩溃。
+     *
+     * @param json 配置文件原文
+     * @return 删掉诊断键后的 JSON；没有可删的键或解析失败时返回原文
+     */
+    private static String stripDiagnosticKeys(final String json) {
+        try {
+            final JsonElement parsed = JsonParser.parseString(json);
+            if (!parsed.isJsonObject()) {
+                return json;
+            }
+            final JsonObject obj = parsed.getAsJsonObject();
+            boolean removed = obj.remove("collisionDiagnostics") != null;
+            // debugProbe 是更早的一个键名（从没落过地，留着只是为了让手写过的文件也能被忽略）。
+            removed |= obj.remove("debugProbe") != null;
+            return removed ? GSON.toJson(obj) : json;
+        } catch (RuntimeException e) {
+            LteLog.LOGGER.warn("[lte] could not strip diagnostic keys from config - reading it as-is", e);
+            return json;
+        }
     }
 
     /**
@@ -2031,6 +2077,12 @@ public final class HeadlightConfig {
         // glow); see the block at the end of this method.
         // Version 26 flips the shipped defaults from "all three on" to "only the band on"
         // active when LambDynamicLights is installed); see the last block of this method.
+        // Version 27 turns the 5-second collision heartbeat off by default
+        // (collisionDiagnostics true -> false) and does nothing else: the key itself is ignored
+        // when the file is read (see stripDiagnosticKeys), so a file that still says true cannot
+        // switch the log back on and no other field is touched. The bump only makes load() write
+        // the corrected value back into the file, so what is on disk matches what is running.
+        // Turning it back on is a launch flag, not a file edit: -Dlte.debug.collision=true.
         if (configVersion < 21) {
             // Version 21 turns the beam cone off by default (still experimental) and appends
             // rainSprayLowSpeedBoost. true was the shipped default of beamCone, so an old file

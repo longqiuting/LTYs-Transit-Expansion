@@ -43,8 +43,9 @@ import java.util.Set;
  * </ul>
  *
  * <h2>诊断日志</h2>
- * 每 5 秒（100 client tick）一行，<b>不受任何配置开关影响</b>（它自己就是用来诊断「为什么没
- * 东西」的，跟着开关一起停就没有意义了）：
+ * 每 5 秒（100 client tick）一行，<b>默认关</b>：要看得用启动参数 {@code -Dlte.debug.probe=true}
+ * 打开（复用 {@link LteDebug} 里已有的开关）。玩家自己开过探针（{@code /mtr_lte debug cone} 或
+ * 水雾探针）期间也照常打印 —— 那时是他自己要数字，日志正是探针的一半。
  * <pre>
  *   [lte] debug: coneCalls=N coneQuads=Q probeQuads=P volBeams=V spraySpawned=S beams=B slots=K
  *                dmin=D range=R g1=a g2=b g3=c g4=d g5=e g6=f g7=g g8=h
@@ -200,9 +201,23 @@ public final class DebugProbe {
         if (spray) {
             spawn(client);
         }
-        if (ticks % LOG_TICKS == 0) {
+        if (ticks % LOG_TICKS == 0 && logging()) {
             log(client);
         }
+    }
+
+    /**
+     * 周期诊断行要不要打印。<b>默认不打印</b>。
+     *
+     * <p>三条都算「要看」：启动参数 {@code -Dlte.debug.probe=true}（{@link LteDebug#probe()}，
+     * 已有开关，{@code -Dlte.debug.collision=true} 会一并打开它）；或者玩家自己开了探针
+     * （{@code /mtr_lte debug cone} / {@code coneBoost} / 水雾探针）—— 探针的输出就是这些计数，
+     * 开了探针却不打日志等于把探针砍了一半，而那几个开关本来就是手动、临时的。
+     *
+     * <p>读的是静态属性，每 100 tick 才问一次，热路径上没有成本。
+     */
+    public static boolean logging() {
+        return LteDebug.probe() || cone || coneBoost || spray;
     }
 
     /**

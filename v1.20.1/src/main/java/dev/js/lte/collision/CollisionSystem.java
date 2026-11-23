@@ -715,7 +715,9 @@ public final class CollisionSystem {
         CollisionImpact.sweep(ticks);
 
         final HeadlightConfig cfg = MtrHeadlightClient.config();
-        if (!cfg.collisionDiagnostics) {
+        // 默认零输出：配置里的键默认 false，而且加载时被忽略（HeadlightConfig#stripDiagnosticKeys）。
+        // 要排查就 -Dlte.debug.collision=true，走 LteDebug 里已有的开关。
+        if (!cfg.collisionDiagnostics && !LteDebug.collision()) {
             resetDiag();
             return;
         }

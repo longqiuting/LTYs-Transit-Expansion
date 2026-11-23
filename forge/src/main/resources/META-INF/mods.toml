@@ -6,10 +6,12 @@ issueTrackerURL = "https://github.com/longqiuting/mtr-external-lights/issues"
 [[mods]]
 modId = "lte"
 version = "${version}"
-displayName = "LTE"
+displayName = "LTY's Transit Expansion (LTE)"
+logoFile = "icon.png"
 authors = "厦航在拍车的无名机长 (kigurumiLTY)"
 description = '''
-LTE —— MTR 的灯光与物理优化（Forge 侧）：动态车头灯 / 车尾灯与可见光柱、屏幕空间散射、雨雾与水花、列车碰撞与撞飞、道床判定，以及信号灯 / 投影机 / PIDS 连接器与 3D 光束编辑器。
+LTY's Transit Expansion（LTE）—— MTR 的灯光与物理优化（Forge 侧）：动态车头灯 / 车尾灯与可见光柱、屏幕空间散射、雨雾与水花、列车碰撞与撞飞、道床判定，以及信号灯 / 投影机 / PIDS 连接器与 3D 光束编辑器。
+LTY's Transit Expansion (LTE) — lighting and physics improvements for Minecraft Transit Railway (Forge side): dynamic head and tail lights with visible beams, screen-space scattering, rain mist and spray, collisions that knock you flying, trackbed geometry, plus signal / projector / PIDS linkers and an in-game 3D beam editor.
 '''
 
 [[dependencies.lte]]
