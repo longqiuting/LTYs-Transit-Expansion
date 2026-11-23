@@ -61,6 +61,8 @@ const TABLE = [
   { rel: 'dev/js/lte/BeamEditor3DScreen.java', from: 'rows.sort(Comparator.comparing((row) -> !row.inUse).thenComparing((row) -> row.id, String.CASE_INSENSITIVE_ORDER));', to: 'rows.sort(Comparator.comparing((BeamEditor3DScreen.VehicleRow row) -> !row.inUse).thenComparing((BeamEditor3DScreen.VehicleRow row) -> row.id, String.CASE_INSENSITIVE_ORDER));', why: 'lambda 形参类型被擦成 Object' },
   { rel: 'dev/js/lte/BeamEditor3DScreen.java', from: 'for(int axis = 0; axis < 3; ++axis) {\n            this.transformButtons.add((Button)this.addRenderableWidget(Button.builder(tr("beam3d.transform.flip", BeamGizmo.nameOf(axis)), (b) -> this.flipAxis(axis))', to: 'for(int axis = 0; axis < 3; ++axis) {\n            int axisIdx = axis;\n            this.transformButtons.add((Button)this.addRenderableWidget(Button.builder(tr("beam3d.transform.flip", BeamGizmo.nameOf(axis)), (b) -> this.flipAxis(axisIdx))', why: 'lambda 捕获 for 变量（非 effectively final）→ 每次迭代取一份 final 副本' },
   { rel: 'dev/js/lte/BeamEditor3DScreen.java', from: 'BeamGizmo.nameOf(axis)), (b) -> this.rotateAxis90(axis))', to: 'BeamGizmo.nameOf(axis)), (b) -> this.rotateAxis90(axisIdx))', why: '同上（rot90 那个 lambda）' },
+  // --- 反编译把 varargs 委托写成自递归（丢实参）：一开编辑器就 StackOverflowError ---
+  { rel: 'dev/js/lte/BeamPackWriter.java', from: 'static List<VehicleLightOverrides.Beam> read(String vehicleId) {\n      return read(vehicleId);', to: 'static List<VehicleLightOverrides.Beam> read(String vehicleId) {\n      return read(vehicleId, new String[0]);', why: 'read(String) 自递归：源码是 read(vehicleId, new String[0])，反编译把 varargs 实参丢了' },
 
   // --- 重映射残留：单字母 obf 方法名没被改名（Yarn 名在映射表里对不上） ---
   { rel: 'dev/js/lte/bind/DisplayPushTicker.java', re: /\.F\(\)/g, to: '.getAllLevels()', why: 'MinecraftServer#F() → getAllLevels()' },
@@ -249,6 +251,58 @@ for (const e of LABEL_CTOR) {
   t = t.replace(new RegExp(`\\bvar10000\\.<init>\\(`, 'g'), `var10000 = new ${e.cls}(`);
   if (t !== s) write(e.rel, t, 'label 块拆开的构造器 → 删裸 new、<init> 改直接赋值');
 }
+
+/* ---------------- 4. 自递归兜底检查（只报警，不改） ---------------- */
+// 反编译会把 `super.read(x)` / `in.read(x)` 掉成一个裸 `read(x)`；方法体里只剩
+// 「用同样实参调自己」就是死循环（车灯编辑器 -> StackOverflowError 就是这么来的）。
+// 真正的修法进上面的 TABLE；这里保证下次重生成回退时不会静默带出崩溃。
+function selfRecursiveMethods(rel) {
+  const src = read(rel);
+  const m = mask(src);
+  const decl = /(?:^|\n)[ \t]*(?:(?:public|private|protected|static|final|synchronized|abstract|native)\s+)*[\w$.<>\[\], ?]+[ \t]+(\w+)[ \t]*\(([^)]*)\)[ \t]*(?:throws [\w., \t]+)?\{/g;
+  const found = [];
+  let hit;
+  while ((hit = decl.exec(m))) {
+    const name = hit[1], params = hit[2];
+    const open = m.indexOf('{', hit.index + hit[0].length - 1);
+    let depth = 0, close = -1;
+    for (let i = open; i < m.length; i++) {
+      if (m[i] === '{') depth++;
+      else if (m[i] === '}') { depth--; if (depth === 0) { close = i; break; } }
+    }
+    if (close < 0) continue;
+    const pnames = params.split(',').map(s => s.trim()).filter(Boolean).map(s => {
+      const t = s.replace(/@[\w$.]+(\([^)]*\))?/g, '').replace(/\bfinal\b/g, '').trim();
+      const parts = t.split(/\s+/).filter(Boolean);
+      return parts.length ? parts[parts.length - 1].replace(/\[\]$/, '') : '';
+    });
+    if (!pnames.length) continue;
+    const args = pnames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*,\\s*');
+    const bodyOne = m.slice(open + 1, close).replace(/\s+/g, ' ').trim();
+    if (new RegExp(`^(?:return |)(?:this\\.)?${name}\\s*\\(\\s*${args}\\s*\\)\\s*;$`).test(bodyOne)) {
+      found.push(`${name}(${pnames.join(', ')})  @ ${rel}:${src.slice(0, hit.index + hit[0].indexOf(name)).split('\n').length}`);
+    }
+  }
+  return found;
+}
+
+(function selfRecursionGuard() {
+  const files = [];
+  (function walk(d) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith('.java')) files.push(path.relative(GEN, p).replace(/\\/g, '/'));
+    }
+  })(GEN);
+  const bad = [];
+  for (const rel of files) bad.push(...selfRecursiveMethods(rel));
+  if (bad.length) {
+    console.error('!! java-gen 里仍有自递归方法（会 StackOverflowError），请把修法加进 TABLE：');
+    for (const b of bad) console.error('   - ' + b);
+    process.exitCode = 1;
+  }
+})();
 
 if (fs.existsSync(LOG)) {
   const raw = fs.readFileSync(LOG, 'utf8').replace(/\r/g, '');

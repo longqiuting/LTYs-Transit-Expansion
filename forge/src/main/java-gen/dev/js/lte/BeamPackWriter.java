@@ -164,7 +164,7 @@ final class BeamPackWriter {
    }
 
    static List<VehicleLightOverrides.Beam> read(String vehicleId) {
-      return read(vehicleId);
+      return read(vehicleId, new String[0]);
    }
 
    static List<VehicleLightOverrides.Beam> read(String vehicleId, String... aliases) {
