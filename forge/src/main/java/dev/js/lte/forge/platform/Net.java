@@ -1,6 +1,7 @@
 package dev.js.lte.forge.platform;
 
 import io.netty.buffer.Unpooled;
+import dev.js.lte.LteLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.BlockPos;
@@ -46,6 +47,8 @@ public final class Net {
 
     private static boolean commonHooksInstalled;
     private static boolean clientHooksInstalled;
+    /** 「对端没装 LTE」的一次性 INFO 只打一条，别刷日志。 */
+    private static volatile boolean warnedMissingPeer;
 
     private Net() {
     }
@@ -103,7 +106,10 @@ public final class Net {
             return false;
         }
         final Connection connection = player.connection.connection;
-        return connection != null && channel(channelId).isRemotePresent(connection);
+        // 只查已注册的频道，不在这里惰性建频道：注册期已过再 createInstance 会抛
+        // IllegalArgumentException，而 canSend 是在玩家进服的 tick 上调用的。
+        final SimpleChannel channel = connection == null ? null : CHANNELS.get(channelId);
+        return channel != null && channel.isRemotePresent(connection);
     }
 
     public static boolean canSend(final ResourceLocation channelId) {
@@ -112,7 +118,8 @@ public final class Net {
         if (listener == null || listener.getConnection() == null || !listener.getConnection().isConnected()) {
             return false;
         }
-        return channel(channelId).isRemotePresent(listener.getConnection());
+        final SimpleChannel channel = CHANNELS.get(channelId);
+        return channel != null && channel.isRemotePresent(listener.getConnection());
     }
 
     public static void send(final ServerPlayer player, final ResourceLocation channelId,
@@ -120,14 +127,60 @@ public final class Net {
         if (player == null || data == null) {
             return;
         }
-        channel(channelId).send(PacketDistributor.PLAYER.with(() -> player), new ToClient(bytes(data)));
+        // 对端没装 LTE 就没有这条频道：发出去只会变成对端的未知 payload。
+        // 所有 S2C 一律在这里收口判断，调用点漏判也越不过去。
+        if (!canSend(player, channelId)) {
+            noteMissingPeer(player, channelId);
+            return;
+        }
+        try {
+            channel(channelId).send(PacketDistributor.PLAYER.with(() -> player), new ToClient(bytes(data)));
+        } catch (Throwable ignored) {
+            // 玩家正好在这一 tick 掉线：丢这一条，别把服务端 tick 打挂。
+        }
     }
 
     public static void sendToServer(final ResourceLocation channelId, final FriendlyByteBuf data) {
         if (data == null) {
             return;
         }
-        channel(channelId).sendToServer(new ToServer(bytes(data)));
+        if (!canSend(channelId)) {
+            noteMissingPeer(null, channelId);
+            return;
+        }
+        try {
+            channel(channelId).sendToServer(new ToServer(bytes(data)));
+        } catch (Throwable ignored) {
+            // 同上：连接刚好断掉时静默丢弃。
+        }
+    }
+
+    /**
+     * 对端没装 LTE 时留一条一次性 INFO，免得功能静默失效到没人能查。
+     * 只在连接确实是活的、且频道确实缺失时才说话（不把「还没连上」当成「没装」）。
+     */
+    private static void noteMissingPeer(final ServerPlayer player, final ResourceLocation channelId) {
+        if (warnedMissingPeer) {
+            return;
+        }
+        final String whose;
+        if (player != null) {
+            final Connection connection = player.connection == null ? null : player.connection.connection;
+            if (connection == null || !connection.isConnected()) {
+                return;
+            }
+            whose = "server -> " + player.getGameProfile().getName();
+        } else {
+            final Minecraft client = Minecraft.getInstance();
+            final ClientPacketListener listener = client == null ? null : client.getConnection();
+            if (listener == null || listener.getConnection() == null || !listener.getConnection().isConnected()) {
+                return;
+            }
+            whose = "client -> server";
+        }
+        warnedMissingPeer = true;
+        LteLog.LOGGER.info("[lte] peer did not register the {} channel (LTE not installed on the other side)"
+                + " - LTE network features are skipped for {}; this is logged once", channelId, whose);
     }
 
     public static List<ServerPlayer> allPlayers(final MinecraftServer server) {
@@ -179,8 +232,18 @@ public final class Net {
     }
 
     private static SimpleChannel channel(final ResourceLocation channelId) {
-        return CHANNELS.computeIfAbsent(channelId, id ->
-                NetworkRegistry.newSimpleChannel(id, () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals));
+        return CHANNELS.computeIfAbsent(channelId, id -> NetworkRegistry.ChannelBuilder
+                .named(id)
+                .networkProtocolVersion(() -> PROTOCOL)
+                // 双端可选的关键：对端没装 LTE 时它根本不会出现在握手列表里，Forge 拿
+                // ABSENT 哨兵（"ABSENT 🤔"）去问 serverAcceptedVersions / clientAcceptedVersions。
+                // 原来两侧都是 PROTOCOL::equals，ABSENT 必然被拒 → Forge 在 LOGIN 阶段就
+                // "Terminating connection with client, mismatched mod list" 断开。
+                // 1.20.1 的 ACCEPTVANILLA 是 String 常量（不是 Predicate，不能 .test()），
+                // 官方给的是 acceptMissingOr(...) = check.or(ABSENT.version()::equals).or(ACCEPTVANILLA::equals)。
+                .clientAcceptedVersions(NetworkRegistry.acceptMissingOr(PROTOCOL::equals))
+                .serverAcceptedVersions(NetworkRegistry.acceptMissingOr(PROTOCOL::equals))
+                .simpleChannel());
     }
 
     private static byte[] bytes(final FriendlyByteBuf data) {
